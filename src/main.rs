@@ -1,7 +1,13 @@
+use clap::Parser;
+
 mod project;
+mod cli;
+mod error;
 
 fn main() {
-    if let Err(e) = project::Project::setup_project() {
-        eprintln!("Error: {}", e);
+    let cli = cli::Cli::parse();
+    let result = cli.command.run();
+    if let Err(e) = result {
+        eprintln!("{}", e);
     }
 }

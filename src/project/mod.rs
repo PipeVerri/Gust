@@ -1,5 +1,6 @@
 use std::{fs, io};
 use std::path::PathBuf;
+use crate::error::Result;
 
 mod filesystem;
 /*
@@ -12,12 +13,19 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn new() -> std::io::Result<Project> {
+    pub fn new() -> Result<Project> {
         let path = filesystem::find_project_root()?;
         Ok(Project { path })
     }
-    
-    pub fn setup_project() -> io::Result<()> {
-        fs::create_dir("./.gust")
+
+    pub fn print_path(&self) -> Result<()> {
+        println!("{}", self.path.display());
+        Ok(())
+    }
+
+    pub fn setup_project() -> Result<()> {
+        // Create the dir and return IoError if it gets raised
+        fs::create_dir("./.gust")?;
+        Ok(())
     }
 }
