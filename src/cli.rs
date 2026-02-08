@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use crate::project::Project;
 use crate::error::Result;
@@ -14,18 +15,22 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Init,
-    PrintPath
+    PrintPath,
+    // Struct-variant commands will still take positional arguments. They can't be tuple-variants because clap doesn't know the arg names
+    Add {
+        path: Vec<PathBuf>
+    }
 }
 
 impl Commands {
     pub fn run(&self) -> Result<()> {
         match self {
-            Commands::Init => Project::setup_project(),
+            Commands::Init => Project::create_project(),
             other => {
                 let project = Project::new()?;
                 match other {
                     Self::PrintPath => project.print_path(),
-                    _ => unreachable!()
+                    _ => unreachable!() // Panics if it reaches this
                 }
             }
         }

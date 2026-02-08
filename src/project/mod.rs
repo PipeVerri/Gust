@@ -1,31 +1,29 @@
-use std::{fs, io};
 use std::path::PathBuf;
 use crate::error::Result;
+use serde::{Deserialize, Serialize};
 
-mod filesystem;
+mod project_creation;
 /*
 Declares the existence of the filesystem module.
-Cargo searches by default in the current dir for the filesystem.rs file, and copies its contents.
+Cargo searches by default in the current dir for the project_creation file, and copies its contents.
  */
 
 pub struct Project {
     path: PathBuf,
+    head: String,
+    commits: Vec<String>,
+    head_tree: Vec<TrackedFile>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct TrackedFile {
+    path: PathBuf,
+    blob_id: String,
 }
 
 impl Project {
-    pub fn new() -> Result<Project> {
-        let path = filesystem::find_project_root()?;
-        Ok(Project { path })
-    }
-
     pub fn print_path(&self) -> Result<()> {
         println!("{}", self.path.display());
-        Ok(())
-    }
-
-    pub fn setup_project() -> Result<()> {
-        // Create the dir and return IoError if it gets raised
-        fs::create_dir("./.gust")?;
         Ok(())
     }
 }
