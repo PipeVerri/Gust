@@ -1,8 +1,9 @@
 use std::{env, fs};
+use std::collections::HashSet;
 use std::io::Write;
 use std::path::PathBuf;
 use crate::error::{GustError, Result};
-use super::{Project, TrackedFile};
+use super::{Project, TrackedFile, StagingArea};
 
 impl Project {
     pub fn new() -> Result<Project> {
@@ -14,12 +15,13 @@ impl Project {
         } else {
             read_commit(&path, &commits.last().unwrap())? // Returns an option in the case the vector is empty
         };
-
+        
         Ok(Project { 
             path, 
             head, 
             commits, 
-            head_tree: tree 
+            head_tree: tree,
+            staging_area: StagingArea::new()
         })
     }
 
@@ -44,7 +46,7 @@ fn read_commit(root_path: &PathBuf, commit: &str) -> Result<Vec<TrackedFile>> {
     // Deserialize it and check for errors
     let tree = serde_json::from_reader(tree_raw);
     if let Err(_) = tree {
-        return Err(GustError::Project("Invalid commit tree".into()));
+        return Err(GustError::ProjectParsing("Invalid commit tree".into()));
     }
 
     // Convert it to a vector of TrackedFile structs
@@ -78,7 +80,7 @@ fn find_project_root() ->  Result<PathBuf> { // Size for Path needs to be known 
             // Go to the parent, pop twice because the path is now "parent/folder/.gust"
             path.pop();
             if !path.pop() { // Returns false when there isn't any parent
-                return Err(GustError::Project("No project root found".into()));
+                return Err(GustError::User("No project root found".into()));
             }
         }
     }

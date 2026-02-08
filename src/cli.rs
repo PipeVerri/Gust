@@ -15,10 +15,9 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Init,
-    PrintPath,
     // Struct-variant commands will still take positional arguments. They can't be tuple-variants because clap doesn't know the arg names
     Add {
-        path: Vec<PathBuf>
+        paths: Vec<PathBuf>
     }
 }
 
@@ -27,9 +26,9 @@ impl Commands {
         match self {
             Commands::Init => Project::create_project(),
             other => {
-                let project = Project::new()?;
+                let mut project = Project::new()?;
                 match other {
-                    Self::PrintPath => project.print_path(),
+                    Commands::Add { paths } => project.add(paths),
                     _ => unreachable!() // Panics if it reaches this
                 }
             }
