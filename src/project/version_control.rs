@@ -1,9 +1,9 @@
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::fs;
 use super::{Project, StagingArea};
 use crate::error::{Result, GustError};
 use std::env;
+use crate::project::storables::Storable;
 
 impl Project {
     pub fn add(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
@@ -11,30 +11,50 @@ impl Project {
             let path = make_path_absolute(path);
             self.check_path(&path)?;
             if path.is_dir() {
-                self.process_folder(&path);
+                self.process_folder(&path)?;
             } else {
-                self.process_file(&path);
+                self.process_file(&path)?;
             }
         }
+
         println!("{:?}", self.staging_area);
         Ok(())
     }
 
-    fn process_file(&mut self, path: &PathBuf) {
-        let root_relative_path = self.make_path_relative_to_root(&path);
-        self.staging_area.insert(root_relative_path);
+    pub fn status(&self) -> Result<()> {
+        if self.staging_area.files.is_empty() {
+            println!("Staging area: No changes.")
+        } else {
+            println!("Staging area:");
+            for file in &self.staging_area.files {
+                println!("  {}", file.display());
+            }
+        }
+        println!("Unstaged changes:");
+        // TODO: show unstaged changes
+        Ok(())
     }
 
-    fn process_folder(&mut self, path: &PathBuf) {
+    fn process_file(&mut self, path: &PathBuf) -> Result<()> {
+        let root_relative_path = self.make_path_relative_to_root(&path);
+        self.staging_area.insert(root_relative_path)
+    }
+
+    fn process_folder(&mut self, path: &PathBuf) -> Result<()> {
+        if (path == &self.path.join(".gust")) {
+            return Ok(()); // Dont process the root .gust folder
+        }
+
         let entries = fs::read_dir(path).unwrap(); // I know the path exists and is a dir
         for entry in entries {
             let entry_path = entry.unwrap().path();
             if entry_path.is_dir() {
-                self.process_folder(&entry_path);
+                self.process_folder(&entry_path)?;
             } else {
-                self.process_file(&entry_path);
+                self.process_file(&entry_path)?;
             }
         }
+        Ok(())
     }
 
     fn check_path(&self, path: &PathBuf) -> Result<()> {
@@ -53,10 +73,9 @@ impl Project {
 }
 
 impl StagingArea {
-    pub fn new() -> Self { StagingArea { files: HashSet::new() } }
-    pub fn insert(&mut self, path: PathBuf) {
+    pub fn insert(&mut self, path: PathBuf) -> Result<()> {
         self.files.insert(path);
-        // TODO: save the staging area to disk
+        self.save(&self.store_path)
     }
 }
 

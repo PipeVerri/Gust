@@ -8,6 +8,8 @@ pub enum GustError {
     ProjectParsing(String),
     #[error("Error: {0}")]
     User(String),
+    #[error("JSON parsing error: {0}")]
+    Json(#[from] serde_json::Error)
 }
 
 pub type Result<T> = std::result::Result<T, GustError>;

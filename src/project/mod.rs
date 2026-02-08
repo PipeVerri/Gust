@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 mod project_creation;
 mod version_control;
+mod storables;
 /*
 Declares the existence of the filesystem module.
 Cargo searches by default in the current dir for the project_creation file and copies its contents.
@@ -26,4 +27,5 @@ struct TrackedFile {
 #[derive(Debug)]
 struct StagingArea {
     files: HashSet<PathBuf>,
+    store_path: PathBuf
 }

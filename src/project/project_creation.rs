@@ -1,8 +1,8 @@
 use std::{env, fs};
-use std::collections::HashSet;
 use std::io::Write;
 use std::path::PathBuf;
 use crate::error::{GustError, Result};
+use crate::project::storables::Storable;
 use super::{Project, TrackedFile, StagingArea};
 
 impl Project {
@@ -10,18 +10,19 @@ impl Project {
         let path = find_project_root()?;
         let head = parse_head(&path)?;
         let commits = read_branch(&path, &head)?;
-        let tree = if commits.is_empty() {
+        let head_tree = if commits.is_empty() {
             Vec::new()
         } else {
             read_commit(&path, &commits.last().unwrap())? // Returns an option in the case the vector is empty
         };
-        
-        Ok(Project { 
-            path, 
+        let staging_area = StagingArea::new(path.join(".gust/staging_area.json").as_path())?;
+
+        Ok(Project {
+            path,
             head, 
             commits, 
-            head_tree: tree,
-            staging_area: StagingArea::new()
+            head_tree,
+            staging_area
         })
     }
 
