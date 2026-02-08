@@ -20,8 +20,22 @@ impl Root {
         Ok(())
     }
 
+    pub fn status(&self) -> Result<()> {
+        if self.staging_area.is_empty() {
+            println!("Staging area: No changes.")
+        } else {
+            println!("Staging area:");
+            for file in &self.staging_area {
+                println!("  {}", file.display());
+            }
+        }
+        println!("\nUnstaged changes:");
+        Ok(())
+        // TODO: show unstaged changes
+    }
+
     fn process_folder(&mut self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
-        if (path.as_path() == &self.path.as_path().join(".gust")) {
+        if path.as_path() == &self.path.as_path().join(".gust") {
             return Ok(Vec::new()); // Dont process the root .gust folder
         }
 

@@ -1,8 +1,8 @@
-mod root;
+pub mod root;
 mod branch;
 mod commit;
 mod tracked_file;
 mod staging_area;
-mod error;
-mod paths;
+pub mod error;
+pub mod paths;
 mod storable;

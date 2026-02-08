@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 use clap::{Parser, Subcommand};
-use crate::project::Project;
-use crate::error::Result;
+use crate::project::root::Root;
+use crate::project::error::Result;
+use crate::project::paths::CliPath;
 
 #[derive(Parser)]
 #[command(name = "Gust")]
@@ -25,11 +26,16 @@ pub enum Commands {
 impl Commands {
     pub fn run(&self) -> Result<()> {
         match self {
-            Commands::Init => Project::create_project(),
+            Commands::Init => Root::create_project(),
             other => {
-                let mut project = Project::new()?;
+                let mut project = Root::new()?;
                 match other {
-                    Commands::Add { paths } => project.add(paths),
+                    Commands::Add { paths } => {
+                        let cli_paths = paths.iter()
+                            .map(|p| CliPath::from(p.as_path()))
+                            .collect();
+                        project.add(cli_paths)
+                    },
                     Commands::Status => project.status(),
                     _ => unreachable!() // Panics if it reaches this
                 }

@@ -1,4 +1,3 @@
-use std::path::Path;
 use serde::{Serialize, Deserialize};
 use crate::project::root::ProjectRootPath;
 use super::commit::Commit;

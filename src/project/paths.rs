@@ -4,7 +4,7 @@ use crate::project::root::ProjectRootPath;
 use super::error::GustError;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub(super) struct CliPath(PathBuf);
+pub(crate) struct CliPath(PathBuf);
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct AbsolutePath(PathBuf);
 #[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
@@ -38,4 +38,5 @@ impl RootRelativePath {
     pub fn new(path: &AbsolutePath, root_path: &ProjectRootPath) -> RootRelativePath {
         Self(path.strip_prefix(root_path.as_path()).into())
     }
+    pub fn display(&self) -> String { self.0.display().to_string() }
 }

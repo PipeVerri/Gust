@@ -2,7 +2,6 @@ use clap::Parser;
 
 mod project;
 mod cli;
-mod error;
 
 fn main() {
     let cli = cli::Cli::parse();

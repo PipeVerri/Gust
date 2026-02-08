@@ -15,6 +15,7 @@ impl StagingArea {
         self.files.insert(path);
         self.save()
     }
+    pub fn is_empty(&self) -> bool { self.files.is_empty() }
 }
 
 impl HasAbsolutePath for StagingArea {
@@ -37,4 +38,10 @@ impl FixedStorable for StagingArea {
     fn create_absolute_path(path: &ProjectRootPath) -> AbsolutePath {
         path.join(".gust/staging_area.json")
     }
+}
+
+impl<'a> IntoIterator for &'a StagingArea {
+    type Item = &'a RootRelativePath;
+    type IntoIter = std::collections::hash_set::Iter<'a, RootRelativePath>;
+    fn into_iter(self) -> Self::IntoIter { self.files.iter() }
 }

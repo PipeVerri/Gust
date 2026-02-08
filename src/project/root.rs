@@ -55,7 +55,7 @@ fn find_project_root() ->  Result<ProjectRootPath> { // Size for Path needs to b
             // Go to the parent, pop twice because the path is now "parent/folder/.gust"
             path.pop();
             if !path.pop() { // Returns false when there isn't any parent
-                return Err(GustError::User("No project root found".into()));
+                return Err(GustError::User("No project found".into()));
             }
         }
     }
@@ -68,8 +68,8 @@ fn parse_head(root_path: &ProjectRootPath) -> Result<String> {
 
 pub struct ProjectRootPath(PathBuf);
 impl ProjectRootPath {
-    pub fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
-    pub fn as_path(&self) -> &Path { self.0.as_path() }
+    pub(super) fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
+    pub(super) fn as_path(&self) -> &Path { self.0.as_path() }
     pub fn is_inside_root(&self, path: &AbsolutePath) -> bool {
         path.as_path().starts_with(&self.0.as_path())
     }
