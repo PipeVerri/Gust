@@ -4,7 +4,7 @@ use std::{fs, io};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use crate::error::Result;
-use super::StagingArea;
+use super::{StagingArea, Branch, Commit, TrackedFile};
 
 // The compiler needs to know Self is sized to know how much space it occupies on the stack
 pub trait Storable: Sized {
@@ -34,5 +34,32 @@ impl Storable for StagingArea {
     }
     fn into_stored(&self) -> &Self::Stored {
         &self.files
+    }
+}
+
+impl Storable for Branch {
+    type Stored = Vec<Commit>;
+    fn from_stored(stored: Self::Stored, store_path: &Path) -> Self {
+        Self {
+            commits: stored,
+            store_path: store_path.into()
+        }
+    }
+
+    fn into_stored(&self) -> &Self::Stored {
+        &self.commits
+    }
+}
+
+impl Storable for Commit {
+    type Stored = Vec<TrackedFile>;
+    fn from_stored(stored: Self::Stored, store_path: &Path) -> Self {
+        Self {
+            tree: stored,
+            store_path: store_path.into()
+        }
+    }
+    fn into_stored(&self) -> &Self::Stored {
+        &self.tree
     }
 }

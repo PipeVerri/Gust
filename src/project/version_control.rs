@@ -11,9 +11,11 @@ impl Project {
             let path = make_path_absolute(path);
             self.check_path(&path)?;
             if path.is_dir() {
-                self.process_folder(&path)?;
+                for file in self.process_folder(&path)? {
+                    self.staging_area.insert(self.make_path_relative_to_root(&file))?;
+                }
             } else {
-                self.process_file(&path)?;
+                self.staging_area.insert(self.make_path_relative_to_root(&path))?;
             }
         }
 
@@ -30,31 +32,29 @@ impl Project {
                 println!("  {}", file.display());
             }
         }
-        println!("Unstaged changes:");
+        println!("\nUnstaged changes:");
         // TODO: show unstaged changes
         Ok(())
     }
 
-    fn process_file(&mut self, path: &PathBuf) -> Result<()> {
-        let root_relative_path = self.make_path_relative_to_root(&path);
-        self.staging_area.insert(root_relative_path)
-    }
-
-    fn process_folder(&mut self, path: &PathBuf) -> Result<()> {
+    fn process_folder(&mut self, path: &PathBuf) -> Result<Vec<PathBuf>> {
         if (path == &self.path.join(".gust")) {
-            return Ok(()); // Dont process the root .gust folder
+            return Ok(Vec::new()); // Dont process the root .gust folder
         }
 
         let entries = fs::read_dir(path).unwrap(); // I know the path exists and is a dir
+        let mut files = Vec::new();
+
         for entry in entries {
             let entry_path = entry.unwrap().path();
             if entry_path.is_dir() {
-                self.process_folder(&entry_path)?;
+                let entry_result = self.process_folder(&entry_path)?;
+                files.extend(entry_result);
             } else {
-                self.process_file(&entry_path)?;
+                files.push(entry_path);
             }
         }
-        Ok(())
+        Ok(files)
     }
 
     fn check_path(&self, path: &PathBuf) -> Result<()> {

@@ -12,10 +12,20 @@ Cargo searches by default in the current dir for the project_creation file and c
 
 pub struct Project {
     path: PathBuf,
-    head: String,
-    commits: Vec<String>,
-    head_tree: Vec<TrackedFile>,
+    branch: Branch,
     staging_area: StagingArea,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Branch {
+    commits: Vec<Commit>,
+    store_path: PathBuf
+}
+
+#[derive(Serialize, Deserialize)]
+struct Commit {
+    tree: Vec<TrackedFile>,
+    store_path: PathBuf
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,4 +38,14 @@ struct TrackedFile {
 struct StagingArea {
     files: HashSet<PathBuf>,
     store_path: PathBuf
+}
+
+impl Branch {
+    fn head(&self) -> Option<&Commit> {
+        if self.commits.is_empty() {
+            None
+        } else {
+            Some(&self.commits[self.commits.len() - 1])
+        }
+    }
 }
