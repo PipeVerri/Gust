@@ -20,6 +20,9 @@ pub enum Commands {
     Add {
         paths: Vec<PathBuf>
     },
+    Rm {
+        paths: Vec<PathBuf>
+    },
     Status
 }
 
@@ -30,12 +33,8 @@ impl Commands {
             other => {
                 let mut project = Root::new()?;
                 match other {
-                    Commands::Add { paths } => {
-                        let cli_paths = paths.iter()
-                            .map(|p| CliPath::from(p.as_path()))
-                            .collect();
-                        project.add(cli_paths)
-                    },
+                    Commands::Add { paths } => project.add(paths),
+                    Commands::Rm { paths } => project.remove(paths),
                     Commands::Status => project.status(),
                     _ => unreachable!() // Panics if it reaches this
                 }

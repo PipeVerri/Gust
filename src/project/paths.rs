@@ -1,9 +1,11 @@
+use std::env::var;
+use std::fmt::{format, Display, Formatter};
 use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
 use crate::project::root::RootPath;
-use super::error::GustError;
+use super::error::{GustError, Result as GustResult};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct CliPath(PathBuf);
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct AbsolutePath(PathBuf);
@@ -27,6 +29,7 @@ impl TryFrom<CliPath> for AbsolutePath {
         }
     }
 }
+
 impl AbsolutePath {
     pub fn from_absolute_path(path: &Path) -> Self { Self(path.into()) }
     pub fn as_path(&self) -> &Path { self.0.as_path() }
@@ -35,8 +38,16 @@ impl AbsolutePath {
 }
 
 impl RootRelativePath {
-    pub fn new(path: &AbsolutePath, root_path: &RootPath) -> RootRelativePath {
-        Self(path.strip_prefix(root_path.as_path()).into())
+    pub fn new(path: &AbsolutePath, root_path: &RootPath) -> GustResult<Self> {
+        if !root_path.is_inside_root(&path) {
+            Err(GustError::User(format!("{} isn't inside the project", path.0.display())))
+        } else {
+            Ok(Self(path.strip_prefix(root_path.as_path()).into()))
+        }
+    }
+    pub fn new_from_cli(path: CliPath, root_path: &RootPath) -> GustResult<Self> {
+        let absolute_path = AbsolutePath::try_from(path.clone())?;
+        Ok(Self::new(&absolute_path, root_path)?)
     }
     pub fn display(&self) -> String { self.0.display().to_string() }
 }

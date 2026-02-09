@@ -1,34 +1,31 @@
 use std::collections::HashSet;
 use std::fs;
+use std::path::PathBuf;
+use crate::cli::Cli;
 use crate::project::commit::Commit;
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
-use super::{Root, Result, GustError};
+use super::{Root, Result, GustError, RootPath};
 
 impl Root {
-    pub fn add(&mut self, paths: Vec<CliPath>) -> Result<()> {
+    // CLI commands
+    pub fn add(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
         let changed_files = self.get_changed_files()?;
-        for path in paths {
-            let absolute_path = AbsolutePath::try_from(path)?; // Checks if it exists
-            if !self.path.is_inside_root(&absolute_path) {
-                return Err(GustError::User(format!("Path {:?} is not a root path", absolute_path)));
+        self.process_path_list(paths, |root, path| {
+            let relative_path = RootRelativePath::new(&path, &root.path)?;
+            if changed_files.contains(&relative_path) {
+                root.staging_area.insert(relative_path)?;
             }
-            if absolute_path.is_dir() {
-                for file in self.process_folder(&absolute_path)? {
-                    self.add_file(&file, &changed_files)?;
-                }
-            } else {
-                self.add_file(&absolute_path, &changed_files)?;
-            }
-        }
+            Ok(())
+        })?;
         Ok(())
     }
 
-    fn add_file(&mut self, file: &AbsolutePath, changed_files: &HashSet<RootRelativePath>) -> Result<()> {
-        let relative_path = RootRelativePath::new(&file, &self.path);
-        if changed_files.contains(&relative_path) {
-            self.staging_area.insert(relative_path)?;
-        }
-        Ok(())
+    pub fn remove(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
+        self.process_path_list(paths, |root, path| {
+            let relative_path = RootRelativePath::new(&path, &root.path)?;
+            root.staging_area.remove(relative_path)?;
+            Ok(())
+        })
     }
 
     pub fn status(&self) -> Result<()> {
@@ -55,6 +52,26 @@ impl Root {
         Ok(())
     }
 
+    // Path processing utils
+    fn process_path_list<F>(&mut self, paths: &Vec<PathBuf>, mut apply: F) -> Result<()>
+    where F: FnMut(&mut Self, &AbsolutePath) -> Result<()>
+    {
+        for cli_path in paths.iter().map(|p| CliPath::from(p.as_path())) {
+            let absolute_path = AbsolutePath::try_from(cli_path)?;
+            if !self.path.is_inside_root(&absolute_path) {
+                return Err(GustError::User(format!("Path {:?} is not a root path", absolute_path)));
+            }
+            if absolute_path.is_dir() {
+                for file in self.process_folder(&absolute_path)? {
+                    apply(self, &file)?;
+                }
+            } else {
+                apply(self, &absolute_path)?;
+            }
+        }
+        Ok(())
+    }
+
     fn get_changed_files(&self) -> Result<HashSet<RootRelativePath>> {
         // TODO: Check for deleted files
         let files = self.process_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
@@ -62,7 +79,7 @@ impl Root {
         let mut changed_files: HashSet<RootRelativePath> = HashSet::new();
 
         for file in files {
-            let relative_file_path = RootRelativePath::new(&file, &self.path);
+            let relative_file_path = RootRelativePath::new(&file, &self.path)?;
             if let Some(c) = commit.as_ref() {
                 if c.has_file_changed(&relative_file_path, &file)? {
                     changed_files.insert(relative_file_path);

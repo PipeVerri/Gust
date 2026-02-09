@@ -2,7 +2,7 @@ use super::paths::{AbsolutePath, RootRelativePath};
 use std::collections::HashSet;
 use super::root::RootPath;
 use super::storable::{HasAbsolutePath, ProjectStorable, FixedStorable};
-use super::error::Result;
+use super::error::{GustError, Result};
 
 #[derive(Debug)]
 pub(super) struct StagingArea {
@@ -14,6 +14,15 @@ impl StagingArea {
     pub fn insert(&mut self, path: RootRelativePath) -> Result<()> {
         self.files.insert(path);
         self.save()
+    }
+    pub fn remove(&mut self, path: RootRelativePath) -> Result<()> {
+        if self.files.contains(&path) {
+            self.files.remove(&path);
+            self.save()?;
+            Ok(())
+        } else {
+            Err(GustError::User(format!("{} is not a file", path.display())))
+        }
     }
     pub fn is_empty(&self) -> bool { self.files.is_empty() }
     pub fn contains(&self, path: &RootRelativePath) -> bool {
