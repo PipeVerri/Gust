@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
+use crate::project::staging_area::StagingArea;
 use super::paths::{AbsolutePath, RootRelativePath};
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
 use super::tracked_file::{Metadata, TrackedFile};
