@@ -16,6 +16,9 @@ impl StagingArea {
         self.save()
     }
     pub fn is_empty(&self) -> bool { self.files.is_empty() }
+    pub fn contains(&self, path: &RootRelativePath) -> bool {
+        self.files.contains(path)
+    }
 }
 
 impl HasAbsolutePath for StagingArea {

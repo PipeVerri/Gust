@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
 use super::paths::{AbsolutePath, RootRelativePath};
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
-use super::tracked_file::TrackedFile;
+use super::tracked_file::{Metadata, TrackedFile};
 use super::error::{Result, GustError};
 
 pub(super) struct Commit {
@@ -68,9 +68,10 @@ impl Commit {
             Ok(None)
         }
     }
-    pub fn has_file_changed(&self, file: &RootRelativePath) -> bool {
-        if self.data.tree.contains_key(file) {
-            
+    pub fn has_file_changed(&self, relative_path: &RootRelativePath, absolute_path: &AbsolutePath) -> Result<bool> {
+        if let Some(tracked_file) = self.data.tree.get(relative_path) {
+            return Ok(tracked_file.metadata != Metadata::new_from_file(absolute_path)?)
         }
+        Ok(true) // If it wasn't present, it has been created, and it counts as a change
     }
 }
