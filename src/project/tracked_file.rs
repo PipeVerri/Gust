@@ -1,8 +1,15 @@
+use std::time::SystemTime;
 use serde::{Serialize, Deserialize};
-use crate::project::paths::RootRelativePath;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct TrackedFile {
-    path: RootRelativePath,
     blob_id: String,
+    metadata: Metadata
+}
+
+#[derive(Serialize, Deserialize)]
+struct Metadata {
+    len: u64,
+    modify_time: SystemTime,
+    access_time: SystemTime
 }

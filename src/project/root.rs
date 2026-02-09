@@ -11,7 +11,7 @@ use super::error::{Result, GustError};
 use super::storable::{IdStorable, FixedStorable};
 
 pub struct Root {
-    path: ProjectRootPath,
+    path: RootPath,
     branch: Branch,
     staging_area: StagingArea,
 }
@@ -43,14 +43,14 @@ impl Root {
     }
 }
 
-fn find_project_root() ->  Result<ProjectRootPath> { // Size for Path needs to be known at compile time
+fn find_project_root() ->  Result<RootPath> { // Size for Path needs to be known at compile time
     let mut path = env::current_dir()?;
     loop {
         path.push(".gust"); // Check if path/.gust exists
         if path.exists() {
             path.pop(); // Remove .gust
             // Doesn't use any constructors because this function should be the only one able to create a ProjectRootPath
-            return Ok(ProjectRootPath(path));
+            return Ok(RootPath(path));
         } else {
             // Go to the parent, pop twice because the path is now "parent/folder/.gust"
             path.pop();
@@ -61,13 +61,13 @@ fn find_project_root() ->  Result<ProjectRootPath> { // Size for Path needs to b
     }
 }
 
-fn parse_head(root_path: &ProjectRootPath) -> Result<String> {
+fn parse_head(root_path: &RootPath) -> Result<String> {
     let head_path = root_path.join(".gust/HEAD");
     Ok(fs::read_to_string(head_path.as_path())?.trim().to_string())
 }
 
-pub struct ProjectRootPath(PathBuf);
-impl ProjectRootPath {
+pub struct RootPath(PathBuf);
+impl RootPath {
     pub(super) fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
     pub(super) fn as_path(&self) -> &Path { self.0.as_path() }
     pub fn is_inside_root(&self, path: &AbsolutePath) -> bool {

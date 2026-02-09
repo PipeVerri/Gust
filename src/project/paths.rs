@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
-use crate::project::root::ProjectRootPath;
+use crate::project::root::RootPath;
 use super::error::GustError;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,7 +35,7 @@ impl AbsolutePath {
 }
 
 impl RootRelativePath {
-    pub fn new(path: &AbsolutePath, root_path: &ProjectRootPath) -> RootRelativePath {
+    pub fn new(path: &AbsolutePath, root_path: &RootPath) -> RootRelativePath {
         Self(path.strip_prefix(root_path.as_path()).into())
     }
     pub fn display(&self) -> String { self.0.display().to_string() }

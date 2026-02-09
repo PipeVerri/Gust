@@ -1,6 +1,6 @@
 use super::paths::{AbsolutePath, RootRelativePath};
 use std::collections::HashSet;
-use super::root::ProjectRootPath;
+use super::root::RootPath;
 use super::storable::{HasAbsolutePath, ProjectStorable, FixedStorable};
 use super::error::Result;
 
@@ -35,7 +35,7 @@ impl ProjectStorable for StagingArea {
 }
 
 impl FixedStorable for StagingArea {
-    fn create_absolute_path(path: &ProjectRootPath) -> AbsolutePath {
+    fn create_absolute_path(path: &RootPath) -> AbsolutePath {
         path.join(".gust/staging_area.json")
     }
 }

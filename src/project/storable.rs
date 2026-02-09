@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use super::error::Result;
 use crate::project::paths::AbsolutePath;
-use crate::project::root::ProjectRootPath;
+use crate::project::root::RootPath;
 
 pub trait HasAbsolutePath {
     fn get_absolute_path(&self) -> &AbsolutePath;
@@ -14,11 +14,14 @@ pub trait ProjectStorable: Sized + HasAbsolutePath {
     type Stored: Serialize + DeserializeOwned + Default; // Default allows the creation of a new empty instance
     fn from_stored(stored: Self::Stored, store_path: AbsolutePath) -> Self;
     fn into_stored(&self) -> &Self::Stored;
+    fn handle_non_existence(path: &AbsolutePath) -> Result<Self::Stored> {
+        Ok(Self::Stored::default())
+    }
     fn new_from_absolute(path: AbsolutePath) -> Result<Self> {
         // If there isn't a file present, create a new Stored-typed default
         let stored: Self::Stored = match fs::File::open(path.as_path()) {
             Ok(file) => serde_json::from_reader(file)?,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => Self::Stored::default(),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Self::handle_non_existence(&path)?,
             Err(e) => return Err(e.into())
         };
         Ok(Self::from_stored(stored, path))
@@ -31,52 +34,15 @@ pub trait ProjectStorable: Sized + HasAbsolutePath {
 }
 
 pub trait FixedStorable: ProjectStorable {
-    fn create_absolute_path(path: &ProjectRootPath) -> AbsolutePath;
-    fn new_from_root(path: &ProjectRootPath) -> Result<Self> {
+    fn create_absolute_path(path: &RootPath) -> AbsolutePath;
+    fn new_from_root(path: &RootPath) -> Result<Self> {
         Self::new_from_absolute(Self::create_absolute_path(path))
     }
 }
 
 pub trait IdStorable: ProjectStorable {
-    fn create_absolute_path(path: &ProjectRootPath, id: &str) -> AbsolutePath;
-    fn new_from_root(path: &ProjectRootPath, id: &str) -> Result<Self> {
+    fn create_absolute_path(path: &RootPath, id: &str) -> AbsolutePath;
+    fn new_from_root(path: &RootPath, id: &str) -> Result<Self> {
         Self::new_from_absolute(Self::create_absolute_path(path, id))
     }
 }
-
-/*impl Storable for StagingArea {
-    type Stored = HashSet<PathBuf>;
-    fn from_stored(stored: Self::Stored, store_path: &Path) -> Self {
-        StagingArea {files: stored, store_path: store_path.into() }
-    }
-    fn into_stored(&self) -> &Self::Stored {
-        &self.files
-    }
-}
-
-impl Storable for Branch {
-    type Stored = Vec<Commit>;
-    fn from_stored(stored: Self::Stored, store_path: &Path) -> Self {
-        Self {
-            commits: stored,
-            store_path: store_path.into()
-        }
-    }
-
-    fn into_stored(&self) -> &Self::Stored {
-        &self.commits
-    }
-}
-
-impl Storable for Commit {
-    type Stored = Vec<TrackedFile>;
-    fn from_stored(stored: Self::Stored, store_path: &Path) -> Self {
-        Self {
-            tree: stored,
-            store_path: store_path.into()
-        }
-    }
-    fn into_stored(&self) -> &Self::Stored {
-        &self.tree
-    }
-}*/

@@ -1,4 +1,5 @@
 use std::fs;
+use crate::project::commit::{Commit, CommitRef};
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
 use super::{Root, Result, GustError};
 
@@ -34,7 +35,19 @@ impl Root {
         // TODO: show unstaged changes
     }
 
-    fn process_folder(&mut self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
+    fn get_changed_files(&self) -> Result<()> {
+        let files = self.process_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
+        let commit = Commit::from_commit_ref_option(self.branch.get_last_commit_ref(), &self.path)?;
+
+        for file in files {
+            let relative_file_path = RootRelativePath::new(&file, &self.path);
+            if let Some(c) = commit {
+            }
+        }
+        Ok(())
+    }
+
+    fn process_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
         if path.as_path() == &self.path.as_path().join(".gust") {
             return Ok(Vec::new()); // Dont process the root .gust folder
         }
