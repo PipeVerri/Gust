@@ -1,14 +1,16 @@
+use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
-use super::commit::{Commit, CommitRef};
-use super::paths::AbsolutePath;
+use crate::project::tracked_file::TrackedFile;
+use super::commit::CommitRef;
+use super::paths::{AbsolutePath, RootRelativePath};
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
 use super::error::Result;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct Branch {
     commits: Vec<CommitRef>,
-    store_path: AbsolutePath
+    store_path: AbsolutePath,
 }
 
 impl Branch {
@@ -26,11 +28,19 @@ impl Branch {
     }
     pub fn display(&self) -> String {
         let mut result = String::new();
-        for commit in &self.commits {
+        for commit in self.commits.iter().rev() {
             result.push_str(&commit.display());
             result.push('\n');
         }
         result
+    }
+    pub fn new_from_commit_ref(commit_ref: CommitRef, root_path: &RootPath, id: &str) -> Result<Self> {
+        let absolute_path = Self::construct_absolute_path(root_path, id);
+        let new_branch = Self {
+            commits: vec![commit_ref],
+            store_path: absolute_path,
+        };
+        Ok(new_branch)
     }
 }
 
@@ -51,7 +61,7 @@ impl ProjectStorable for Branch {
 }
 
 impl IdStorable for Branch {
-    fn create_absolute_path(path: &RootPath, id: &str) -> AbsolutePath {
+    fn construct_absolute_path(path: &RootPath, id: &str) -> AbsolutePath {
         path.join(&format!(".gust/branches/{}.json", id))
     }
 }

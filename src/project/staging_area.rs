@@ -1,5 +1,5 @@
 use super::paths::{AbsolutePath, RootRelativePath};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use super::root::RootPath;
 use super::storable::{HasAbsolutePath, ProjectStorable, FixedStorable};

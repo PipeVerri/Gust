@@ -1,11 +1,7 @@
-use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::hash::Hash;
 use std::path::PathBuf;
-use crate::project::commit::{Commit, CommitMetadata, CommitRef};
+use crate::project::commit::{CommitMetadata, CommitRef};
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
-use crate::project::staging_area::ChangeType;
-use super::{Root, Result, GustError};
+use super::{Root, Result};
 
 impl Root {
     // CLI commands

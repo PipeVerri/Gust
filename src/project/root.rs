@@ -1,12 +1,13 @@
-mod version_control;
+mod commit_creation;
 mod path_processing;
+mod branch_creation;
 
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
 use std::io::Write;
-use crate::project::commit::{Commit, CommitRef};
-use crate::project::paths::AbsolutePath;
+use super::commit::Commit;
+use super::paths::AbsolutePath;
 use super::branch::Branch;
 use super::staging_area::StagingArea;
 use super::error::{Result, GustError};
@@ -43,10 +44,10 @@ impl Root {
         head.write_all(b"main")?;
         Ok(())
     }
-    
-    pub fn get_staging_area(&self) -> &StagingArea { &self.staging_area }
-    pub fn get_path(&self) -> &RootPath { &self.path }
-    pub fn get_last_commit(&self) -> Result<Option<Commit>> {
+
+    pub(super) fn get_staging_area(&self) -> &StagingArea { &self.staging_area }
+    pub(super) fn get_path(&self) -> &RootPath { &self.path }
+    pub(super) fn get_last_commit(&self) -> Result<Option<Commit>> {
         Commit::from_commit_ref_option(self.branch.get_last_commit_ref(), &self.path)
     }
 }

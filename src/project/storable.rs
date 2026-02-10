@@ -41,8 +41,8 @@ pub trait FixedStorable: ProjectStorable {
 }
 
 pub trait IdStorable: ProjectStorable {
-    fn create_absolute_path(path: &RootPath, id: &str) -> AbsolutePath;
+    fn construct_absolute_path(path: &RootPath, id: &str) -> AbsolutePath;
     fn new_from_root(path: &RootPath, id: &str) -> Result<Self> {
-        Self::new_from_absolute(Self::create_absolute_path(path, id))
+        Self::new_from_absolute(Self::construct_absolute_path(path, id))
     }
 }

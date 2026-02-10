@@ -27,7 +27,10 @@ pub enum Commands {
         message: String
     },
     Status,
-    Info
+    Info,
+    Branch {
+        branch_name: String
+    }
 }
 
 impl Commands {
@@ -42,6 +45,7 @@ impl Commands {
                     Commands::Commit { message } => project.commit(message.clone()),
                     Commands::Status => project.status(),
                     Commands::Info => project.info(),
+                    Commands::Branch { branch_name } => project.branch(branch_name),
                     _ => unreachable!() // Panics if it reaches this
                 }
             }

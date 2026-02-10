@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
 use serde::{Serialize, Deserialize};
 use crate::project::root::{Root, RootPath};
 use super::paths::{AbsolutePath, RootRelativePath};
@@ -13,7 +12,7 @@ pub(super) struct Commit {
     data: StorableCommit
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub(super) struct CommitRef {
     commit_id: String,
     metadata: CommitMetadata
@@ -54,7 +53,7 @@ impl ProjectStorable for Commit {
 }
 
 impl IdStorable for Commit {
-    fn create_absolute_path(path: &RootPath, id: &str) -> AbsolutePath {
+    fn construct_absolute_path(path: &RootPath, id: &str) -> AbsolutePath {
         path.join(&format!(".gust/commits/{}.json", id))
     }
 }
@@ -67,7 +66,7 @@ pub enum FileStatus {
 
 impl Commit {
     pub fn from_commit_ref(reference: &CommitRef, root_path: &RootPath) -> Result<Commit> {
-        let commit_path = Commit::create_absolute_path(root_path, &reference.commit_id);
+        let commit_path = Commit::construct_absolute_path(root_path, &reference.commit_id);
         Commit::new_from_absolute(commit_path)
     }
     pub fn from_commit_ref_option(reference: Option<&CommitRef>, root_path: &RootPath) -> Result<Option<Commit>> {
@@ -92,7 +91,7 @@ impl Commit {
         Ok(FileStatus::Added) // If it wasn't present, it has been created, and it counts as a change
     }
 
-    pub fn tree_iterator(&self) -> std::collections::hash_map::Iter<RootRelativePath, TrackedFile> {
+    pub fn tree_iterator(&self) -> std::collections::hash_map::Iter<'_, RootRelativePath, TrackedFile> {
         self.data.tree.iter()
     }
 
@@ -109,7 +108,7 @@ impl CommitRef {
             HashMap::new()
         };
         for (file, change_type) in root.get_staging_area().get_files() {
-            match change_type { 
+            match change_type {
                 ChangeType::Removed => { tree.remove(&file); },
                 _ => {
                     let absolute_file_path = root.get_path().join_path(file.as_path());
@@ -124,7 +123,7 @@ impl CommitRef {
         };
         let id = sha256::digest(serde_json::to_string(&storable)?);
         let commit = Commit {
-            store_path: Commit::create_absolute_path(root.get_path(), &id.to_string()),
+            store_path: Commit::construct_absolute_path(root.get_path(), &id.to_string()),
             data: storable
         };
         commit.save()?;
