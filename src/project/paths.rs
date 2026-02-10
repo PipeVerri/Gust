@@ -18,8 +18,11 @@ impl From<&Path> for CliPath {
 impl TryFrom<CliPath> for AbsolutePath {
     type Error = GustError;
     fn try_from(value: CliPath) -> Result<Self, Self::Error> {
-        let cwd = std::env::current_dir()?;
-        let joined = cwd.join(&value.0);
+        let joined = if value.0.is_absolute() {
+            value.0
+        } else {
+            std::env::current_dir()?.join(&value.0)
+        };
         if !joined.exists() {
             Err(GustError::User(format!("Path is not inside root: {}", joined.display())))
         } else {
@@ -29,7 +32,12 @@ impl TryFrom<CliPath> for AbsolutePath {
 }
 
 impl AbsolutePath {
-    pub fn from_absolute_path(path: &Path) -> Self { Self(path.into()) }
+    pub fn from_absolute_path(path: &Path) -> Self {
+        if !path.is_absolute() {
+            panic!("Path must be absolute");
+        }
+        Self(path.into())
+    }
     pub fn as_path(&self) -> &Path { self.0.as_path() }
     pub fn strip_prefix(&self, prefix: &Path) -> &Path { self.0.strip_prefix(prefix).unwrap() }
     pub fn is_dir(&self) -> bool { self.0.is_dir() }
