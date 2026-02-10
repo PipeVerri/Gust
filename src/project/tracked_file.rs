@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 use super::paths::AbsolutePath;
 use super::error::{GustError, Result};
 use std::fs;
+use std::path::Path;
 use crate::project::root::RootPath;
 
 #[derive(Serialize, Deserialize)]
@@ -28,8 +29,7 @@ impl Metadata {
 impl TrackedFile {
     pub fn new(path: &AbsolutePath, root_dir: &RootPath) -> Result<Self> {
         // Create the blob
-        let file = fs::read(path.as_path())?;
-        let hash = sha256::digest(file);
+        let hash = hash_file(path.as_path())?;
         let blob_path = root_dir.join(&format!(".gust/blobs/{}", hash.to_string()));
         if blob_path.as_path().exists() {
             return Err(GustError::ProjectParsing(format!("Blob for {} already exists", path.as_path().display())));
@@ -47,4 +47,11 @@ impl TrackedFile {
             metadata: metadata?
         })
     }
+
+    pub fn get_blob_id(&self) -> &str { &self.blob_id }
+}
+
+pub fn hash_file(path: &Path) -> Result<String> {
+    let file = fs::read(path)?;
+    Ok(sha256::digest(file))
 }
