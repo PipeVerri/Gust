@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use std::fs::File;
 use serde::{Serialize, Deserialize};
-use crate::project::root::RootPath;
-use crate::project::staging_area::StagingArea;
+use crate::project::root::{Root, RootPath};
 use super::paths::{AbsolutePath, RootRelativePath};
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
 use super::tracked_file::{hash_file, Metadata, TrackedFile};
 use super::error::{Result, GustError};
+use super::staging_area::ChangeType;
 
 pub(super) struct Commit {
     store_path: AbsolutePath,
@@ -58,6 +59,12 @@ impl IdStorable for Commit {
     }
 }
 
+pub enum FileStatus {
+    Added,
+    Modified,
+    Unchanged
+}
+
 impl Commit {
     pub fn from_commit_ref(reference: &CommitRef, root_path: &RootPath) -> Result<Commit> {
         let commit_path = Commit::create_absolute_path(root_path, &reference.commit_id);
@@ -70,25 +77,46 @@ impl Commit {
             Ok(None)
         }
     }
-    pub fn has_file_changed(&self, relative_path: &RootRelativePath, absolute_path: &AbsolutePath) -> Result<bool> {
+    pub fn has_file_changed(&self, relative_path: &RootRelativePath, absolute_path: &AbsolutePath) -> Result<FileStatus> {
         if let Some(tracked_file) = self.data.tree.get(relative_path) {
             return if tracked_file.metadata != Metadata::new_from_file(absolute_path)? { // Compare hashes if files aren't equal
-                Ok(hash_file(absolute_path.as_path())? != tracked_file.get_blob_id())
+                if hash_file(absolute_path.as_path())? != tracked_file.get_blob_id() {
+                    Ok(FileStatus::Modified)
+                } else {
+                    Ok(FileStatus::Unchanged)
+                }
             } else {
-                Ok(false) // Same metadata = same file
+                Ok(FileStatus::Unchanged) // Same metadata = same file
             }
         }
-        Ok(true) // If it wasn't present, it has been created, and it counts as a change
+        Ok(FileStatus::Added) // If it wasn't present, it has been created, and it counts as a change
+    }
+
+    pub fn tree_iterator(&self) -> std::collections::hash_map::Iter<RootRelativePath, TrackedFile> {
+        self.data.tree.iter()
+    }
+
+    pub fn copy_tree(&self) -> HashMap<RootRelativePath, TrackedFile> {
+        self.data.tree.clone()
     }
 }
 
 impl CommitRef {
-    pub fn new(staging_area: &StagingArea, metadata: CommitMetadata, root_path: &RootPath) -> Result<CommitRef> {
-        let mut tree: HashMap<RootRelativePath, TrackedFile> = HashMap::new();
-        for file in staging_area.get_files() {
-            let absolute_file_path = root_path.join_path(file.as_path());
-            let tracked_file = TrackedFile::new(&absolute_file_path, root_path)?;
-            tree.insert(file, tracked_file);
+    pub fn new(root: &Root, metadata: CommitMetadata) -> Result<CommitRef> {
+        let mut tree = if let Some(c) = root.get_last_commit()? {
+            c.copy_tree()
+        } else {
+            HashMap::new()
+        };
+        for (file, change_type) in root.get_staging_area().get_files() {
+            match change_type { 
+                ChangeType::Removed => { tree.remove(&file); },
+                _ => {
+                    let absolute_file_path = root.get_path().join_path(file.as_path());
+                    let tracked_file = TrackedFile::new(&absolute_file_path, root.get_path())?;
+                    tree.insert(file, tracked_file);
+                }
+            };
         }
         let storable = StorableCommit {
             tree,
@@ -96,7 +124,7 @@ impl CommitRef {
         };
         let id = sha256::digest(serde_json::to_string(&storable)?);
         let commit = Commit {
-            store_path: Commit::create_absolute_path(root_path, &id.to_string()),
+            store_path: Commit::create_absolute_path(root.get_path(), &id.to_string()),
             data: storable
         };
         commit.save()?;

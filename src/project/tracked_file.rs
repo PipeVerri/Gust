@@ -6,13 +6,13 @@ use std::fs;
 use std::path::Path;
 use crate::project::root::RootPath;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub(super) struct TrackedFile {
     blob_id: String,
     pub metadata: Metadata
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub(super) struct Metadata {
     len: u64,
     modify_time: SystemTime,

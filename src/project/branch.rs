@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
-use super::commit::CommitRef;
+use super::commit::{Commit, CommitRef};
 use super::paths::AbsolutePath;
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
 use super::error::Result;

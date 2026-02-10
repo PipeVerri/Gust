@@ -1,21 +1,27 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::hash::Hash;
 use std::path::PathBuf;
 use crate::project::commit::{Commit, CommitMetadata, CommitRef};
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
+use crate::project::staging_area::ChangeType;
 use super::{Root, Result, GustError};
 
 impl Root {
     // CLI commands
     pub fn add(&mut self, paths: &Vec<PathBuf>) -> Result<()> {
-        let changed_files = self.get_changed_files()?;
-        self.process_path_list(paths, |root, path| {
-            let relative_path = RootRelativePath::new(&path, &root.path)?;
-            if changed_files.contains(&relative_path) {
-                root.staging_area.insert(relative_path)?;
+        // TODO: Use a trie for faster addition
+        // Checks that the user added the change either by passing the direct file or a parent directory
+        for (file, change) in self.get_changed_files()? {
+            let absolute_file = self.path.join_path(file.as_path());
+            for cli_path in paths {
+                let absolute_cli = AbsolutePath::try_from(CliPath::from(cli_path.as_path()))?;
+                if absolute_file == absolute_cli || absolute_file.as_path().starts_with(absolute_cli.as_path()) {
+                    self.staging_area.insert(file.clone(), change.clone())?;
+                }
             }
-            Ok(())
-        })?;
+        }
+
         Ok(())
     }
 
@@ -28,20 +34,21 @@ impl Root {
     }
 
     pub fn status(&self) -> Result<()> {
-        let changed_files = self.get_changed_files()?;
         println!("Changes to be committed:");
         if self.staging_area.is_empty() {
             println!("  No changes");
         } else {
-            for file in self.staging_area.into_iter() {
-                println!("  {}", file.display())
+            for (file, change_type) in self.staging_area.into_iter() {
+                println!("  {} {}", change_type.display(), file.display());
             }
         }
+
         println!("\nUnstaged changes:");
+        let changed_files = self.get_changed_files()?;
         let mut unstaged_file_exists = false;
-        for file in changed_files {
+        for (file, change_type) in changed_files {
             if !self.staging_area.contains(&file) {
-                println!("  {}", file.display());
+                println!("  {} {}", change_type.display(), file.display());
                 unstaged_file_exists = true;
             }
         }
@@ -53,7 +60,7 @@ impl Root {
 
     pub fn commit(&mut self, message: String) -> Result<()> {
         let metadata = CommitMetadata::new(message);
-        let commit = CommitRef::new(&self.staging_area, metadata, &self.path)?;
+        let commit = CommitRef::new(&self, metadata)?;
         self.branch.insert(commit)?;
         self.staging_area.clear()?;
         Ok(())
@@ -62,64 +69,5 @@ impl Root {
     pub fn info(&self) -> Result<()> {
         println!("Commit history:\n{}", self.branch.display());
         Ok(())
-    }
-
-    // Path processing utils
-    fn process_path_list<F>(&mut self, paths: &Vec<PathBuf>, mut apply: F) -> Result<()>
-    where F: FnMut(&mut Self, &AbsolutePath) -> Result<()>
-    {
-        for cli_path in paths.iter().map(|p| CliPath::from(p.as_path())) {
-            let absolute_path = AbsolutePath::try_from(cli_path)?;
-            if !self.path.is_inside_root(&absolute_path) {
-                return Err(GustError::User(format!("Path {:?} is not a root path", absolute_path)));
-            }
-            if absolute_path.is_dir() {
-                for file in self.process_folder(&absolute_path)? {
-                    apply(self, &file)?;
-                }
-            } else {
-                apply(self, &absolute_path)?;
-            }
-        }
-        Ok(())
-    }
-
-    fn get_changed_files(&self) -> Result<HashSet<RootRelativePath>> {
-        // TODO: Check for deleted files
-        let files = self.process_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
-        let commit = Commit::from_commit_ref_option(self.branch.get_last_commit_ref(), &self.path)?;
-        let mut changed_files: HashSet<RootRelativePath> = HashSet::new();
-
-        for file in files {
-            let relative_file_path = RootRelativePath::new(&file, &self.path)?;
-            if let Some(c) = commit.as_ref() {
-                if c.has_file_changed(&relative_file_path, &file)? {
-                    changed_files.insert(relative_file_path);
-                }
-            } else {
-                changed_files.insert(relative_file_path);
-            }
-        }
-        Ok(changed_files)
-    }
-
-    fn process_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
-        if path.as_path() == &self.path.as_path().join(".gust") {
-            return Ok(Vec::new()); // Dont process the root .gust folder
-        }
-
-        let entries = fs::read_dir(path.as_path()).unwrap(); // I know the path exists and is a dir
-        let mut files = Vec::new();
-
-        for entry in entries {
-            let entry_path = AbsolutePath::from_absolute_path(&entry.unwrap().path());
-            if entry_path.is_dir() {
-                let entry_result = self.process_folder(&entry_path)?;
-                files.extend(entry_result);
-            } else {
-                files.push(entry_path);
-            }
-        }
-        Ok(files)
     }
 }
