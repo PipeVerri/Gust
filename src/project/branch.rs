@@ -3,6 +3,7 @@ use crate::project::root::RootPath;
 use super::commit::CommitRef;
 use super::paths::AbsolutePath;
 use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
+use super::error::Result;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct Branch {
@@ -17,6 +18,19 @@ impl Branch {
         } else {
             Some(&self.commits[self.commits.len() - 1])
         }
+    }
+    pub fn insert(&mut self, commit_ref: CommitRef) -> Result<()> {
+        self.commits.push(commit_ref);
+        self.save()?;
+        Ok(())
+    }
+    pub fn display(&self) -> String {
+        let mut result = String::new();
+        for commit in &self.commits {
+            result.push_str(&commit.display());
+            result.push('\n');
+        }
+        result
     }
 }
 

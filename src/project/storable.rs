@@ -14,7 +14,7 @@ pub trait ProjectStorable: Sized + HasAbsolutePath {
     type Stored: Serialize + DeserializeOwned + Default; // Default allows the creation of a new empty instance
     fn from_stored(stored: Self::Stored, store_path: AbsolutePath) -> Self;
     fn into_stored(&self) -> &Self::Stored;
-    fn handle_non_existence(path: &AbsolutePath) -> Result<Self::Stored> {
+    fn handle_non_existence(_: &AbsolutePath) -> Result<Self::Stored> {
         Ok(Self::Stored::default())
     }
     fn new_from_absolute(path: AbsolutePath) -> Result<Self> {

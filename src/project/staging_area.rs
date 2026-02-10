@@ -28,6 +28,14 @@ impl StagingArea {
     pub fn contains(&self, path: &RootRelativePath) -> bool {
         self.files.contains(path)
     }
+    pub fn get_files(&self) -> HashSet<RootRelativePath> {
+        self.files.clone()
+    }
+    pub fn clear(&mut self) -> Result<()> {
+        self.files.clear();
+        self.save()?;
+        Ok(())
+    }
 }
 
 impl HasAbsolutePath for StagingArea {
@@ -57,3 +65,4 @@ impl<'a> IntoIterator for &'a StagingArea {
     type IntoIter = std::collections::hash_set::Iter<'a, RootRelativePath>;
     fn into_iter(self) -> Self::IntoIter { self.files.iter() }
 }
+

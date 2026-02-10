@@ -2,7 +2,6 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use crate::project::root::Root;
 use crate::project::error::Result;
-use crate::project::paths::CliPath;
 
 #[derive(Parser)]
 #[command(name = "Gust")]
@@ -23,7 +22,12 @@ pub enum Commands {
     Rm {
         paths: Vec<PathBuf>
     },
-    Status
+    Commit {
+        #[arg(short, long, default_value = "")]
+        message: String
+    },
+    Status,
+    Info
 }
 
 impl Commands {
@@ -35,7 +39,9 @@ impl Commands {
                 match other {
                     Commands::Add { paths } => project.add(paths),
                     Commands::Rm { paths } => project.remove(paths),
+                    Commands::Commit { message } => project.commit(message.clone()),
                     Commands::Status => project.status(),
+                    Commands::Info => project.info(),
                     _ => unreachable!() // Panics if it reaches this
                 }
             }

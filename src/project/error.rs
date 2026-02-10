@@ -1,4 +1,3 @@
-use std::path;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -10,9 +9,7 @@ pub(crate) enum GustError {
     #[error("Error: {0}")]
     User(String),
     #[error("JSON parsing error: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("Path error: {0}")]
-    Path(String),
+    Json(#[from] serde_json::Error)
 }
 
 pub type Result<T> = std::result::Result<T, GustError>;

@@ -38,7 +38,7 @@ impl TrackedFile {
 
         // Create metadata
         let metadata = Metadata::new_from_file(path);
-        if let Err(e) = &metadata {
+        if let Err(_) = metadata {
             fs::remove_file(blob_path.as_path())?;
         }
 

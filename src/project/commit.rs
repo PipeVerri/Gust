@@ -14,10 +14,11 @@ pub(super) struct Commit {
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct CommitRef {
-    commit_id: String
+    commit_id: String,
+    metadata: CommitMetadata
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub(super) struct CommitMetadata {
     name: String
 }
@@ -75,4 +76,31 @@ impl Commit {
         }
         Ok(true) // If it wasn't present, it has been created, and it counts as a change
     }
+}
+
+impl CommitRef {
+    pub fn new(staging_area: &StagingArea, metadata: CommitMetadata, root_path: &RootPath) -> Result<CommitRef> {
+        let mut tree: HashMap<RootRelativePath, TrackedFile> = HashMap::new();
+        for file in staging_area.get_files() {
+            let absolute_file_path = root_path.join_path(file.as_path());
+            let tracked_file = TrackedFile::new(&absolute_file_path, root_path)?;
+            tree.insert(file, tracked_file);
+        }
+        let storable = StorableCommit {
+            tree,
+            metadata: metadata.clone()
+        };
+        let id = sha256::digest(serde_json::to_string(&storable)?);
+        let commit = Commit {
+            store_path: Commit::create_absolute_path(root_path, &id.to_string()),
+            data: storable
+        };
+        commit.save()?;
+        Ok(CommitRef{ commit_id: id.to_string(), metadata })
+    }
+    pub fn display(&self) -> String { format!("{}: {}", self.metadata.name, self.commit_id) }
+}
+
+impl CommitMetadata {
+    pub fn new(name: String) -> Self { Self { name } }
 }

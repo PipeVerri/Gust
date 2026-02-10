@@ -69,8 +69,9 @@ fn parse_head(root_path: &RootPath) -> Result<String> {
 pub struct RootPath(PathBuf);
 impl RootPath {
     pub(super) fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
+    pub(super) fn join_path(&self, path: &Path) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
     pub(super) fn as_path(&self) -> &Path { self.0.as_path() }
-    pub fn is_inside_root(&self, path: &AbsolutePath) -> bool {
+    pub(super) fn is_inside_root(&self, path: &AbsolutePath) -> bool {
         path.as_path().starts_with(&self.0.as_path())
     }
 }

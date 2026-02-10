@@ -1,5 +1,3 @@
-use std::env::var;
-use std::fmt::{format, Display, Formatter};
 use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
 use crate::project::root::RootPath;
@@ -9,7 +7,7 @@ use super::error::{GustError, Result as GustResult};
 pub(crate) struct CliPath(PathBuf);
 #[derive(Serialize, Deserialize, Debug)]
 pub(super) struct AbsolutePath(PathBuf);
-#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq, Clone)]
 pub(super) struct RootRelativePath(PathBuf);
 
 impl From<&Path> for CliPath {
@@ -45,9 +43,10 @@ impl RootRelativePath {
             Ok(Self(path.strip_prefix(root_path.as_path()).into()))
         }
     }
-    pub fn new_from_cli(path: CliPath, root_path: &RootPath) -> GustResult<Self> {
+    /*pub fn new_from_cli(path: CliPath, root_path: &RootPath) -> GustResult<Self> {
         let absolute_path = AbsolutePath::try_from(path.clone())?;
         Ok(Self::new(&absolute_path, root_path)?)
-    }
+    }*/
     pub fn display(&self) -> String { self.0.display().to_string() }
+    pub fn as_path(&self) -> &Path { self.0.as_path() }
 }

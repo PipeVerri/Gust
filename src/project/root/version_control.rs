@@ -1,10 +1,9 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
-use crate::cli::Cli;
-use crate::project::commit::Commit;
+use crate::project::commit::{Commit, CommitMetadata, CommitRef};
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
-use super::{Root, Result, GustError, RootPath};
+use super::{Root, Result, GustError};
 
 impl Root {
     // CLI commands
@@ -49,6 +48,19 @@ impl Root {
         if !unstaged_file_exists {
             println!("  No changes");
         }
+        Ok(())
+    }
+
+    pub fn commit(&mut self, message: String) -> Result<()> {
+        let metadata = CommitMetadata::new(message);
+        let commit = CommitRef::new(&self.staging_area, metadata, &self.path)?;
+        self.branch.insert(commit)?;
+        self.staging_area.clear()?;
+        Ok(())
+    }
+
+    pub fn info(&self) -> Result<()> {
+        println!("Commit history:\n{}", self.branch.display());
         Ok(())
     }
 
