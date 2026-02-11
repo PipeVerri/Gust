@@ -10,6 +10,7 @@ use super::error::Result;
 pub(super) struct Branch {
     commits: Vec<CommitRef>,
     store_path: AbsolutePath,
+    pub name: String,
 }
 
 impl Branch {
@@ -38,6 +39,7 @@ impl Branch {
         let new_branch = Self {
             commits: vec![commit_ref],
             store_path: absolute_path,
+            name: id.to_string()
         };
         Ok(new_branch)
     }
@@ -49,8 +51,8 @@ impl ProjectStorable for Branch {
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
         creation_args.0.join(&format!(".gust/branches/{}.json", creation_args.1))
     }
-    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
-        Self { commits: stored, store_path: Self::build_absolute_path(&creation_args) }
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self> {
+        Ok(Self { commits: stored, store_path: Self::build_absolute_path(&creation_args), name: creation_args.1 })
     }
     fn into_stored(&self) -> Cow<'_, Self::Stored> {
         Cow::Borrowed(&self.commits)

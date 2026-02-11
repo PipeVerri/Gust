@@ -53,8 +53,8 @@ impl ProjectStorable for StagingArea {
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
         creation_args.join(".gust/staging_area.json")
     }
-    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
-        Self { files: stored, store_path: Self::build_absolute_path(&creation_args) }
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self> {
+        Ok(Self { files: stored, store_path: Self::build_absolute_path(&creation_args) })
     }
     fn into_stored(&self) -> Cow<'_, Self::Stored> {
         Cow::Borrowed(&self.files)

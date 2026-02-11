@@ -11,7 +11,7 @@ pub trait ProjectStorable: Sized {
     type Stored: Serialize + DeserializeOwned + Default + Clone; // Default allows the creation of a new empty instance, Clone so Cow can take ownership
     type CreationArgs;
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath;
-    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self;
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self>;
     fn into_stored(&self) -> Cow<'_, Self::Stored>;
     fn handle_non_existence(_: &AbsolutePath) -> Result<Self::Stored> {
         Ok(Self::Stored::default())
@@ -23,7 +23,7 @@ pub trait ProjectStorable: Sized {
             Err(e) if e.kind() == io::ErrorKind::NotFound => Self::handle_non_existence(&Self::build_absolute_path(&creation_args))?,
             Err(e) => return Err(e.into())
         };
-        Ok(Self::from_stored(stored, creation_args))
+        Self::from_stored(stored, creation_args)
     }
     fn save_to_path(&self, path: &AbsolutePath) -> Result<()> {
         let file = fs::File::create(path.as_path())?;

@@ -6,29 +6,28 @@ use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
 use std::io::Write;
+use crate::project::head::Head;
 use super::commit::Commit;
 use super::paths::AbsolutePath;
-use super::branch::Branch;
 use super::staging_area::StagingArea;
 use super::error::{Result, GustError};
-use super::storable::{ProjectStorable, ContainsStorePath};
+use super::storable::ProjectStorable;
 
 pub struct Root {
     path: RootPath,
-    branch: Branch,
+    head: Head,
     staging_area: StagingArea,
 }
 
 impl Root {
     pub fn new() -> Result<Root> {
         let path = find_project_root()?;
-        let head = parse_head(&path)?;
-        let branch = Branch::new((path.clone(), head))?;
+        let head = Head::new(path.clone())?;
         let staging_area = StagingArea::new(path.clone())?;
 
         Ok(Root {
             path,
-            branch,
+            head,
             staging_area
         })
     }
@@ -48,7 +47,7 @@ impl Root {
     pub(super) fn get_staging_area(&self) -> &StagingArea { &self.staging_area }
     pub(super) fn get_path(&self) -> &RootPath { &self.path }
     pub(super) fn get_last_commit(&self) -> Result<Option<Commit>> {
-        Commit::from_commit_ref_option(self.branch.get_last_commit_ref(), &self.path)
+        Commit::from_commit_ref_option(self.head.get_tree()?, &self.path)
     }
 }
 
@@ -68,11 +67,6 @@ fn find_project_root() ->  Result<RootPath> { // Size for Path needs to be known
             }
         }
     }
-}
-
-fn parse_head(root_path: &RootPath) -> Result<String> {
-    let head_path = root_path.join(".gust/HEAD");
-    Ok(fs::read_to_string(head_path.as_path())?.trim().to_string())
 }
 
 #[derive(Clone)]

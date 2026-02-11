@@ -6,3 +6,4 @@ mod staging_area;
 pub mod error;
 pub mod paths;
 mod storable;
+mod head;

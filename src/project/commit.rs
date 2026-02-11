@@ -36,11 +36,11 @@ impl ProjectStorable for Commit {
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
         creation_args.0.join(&format!(".gust/commits/{}.json", creation_args.1))
     }
-    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
-        Self {
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self> {
+        Ok(Self {
             store_path: Self::build_absolute_path(&creation_args),
             data: stored
-        }
+        })
     }
     fn into_stored(&self) -> Cow<'_, Self::Stored> {
         Cow::Borrowed(&self.data)

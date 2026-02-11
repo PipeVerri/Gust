@@ -29,7 +29,8 @@ impl Root {
 
     pub(super) fn get_changed_files(&self) -> Result<HashMap<RootRelativePath, ChangeType>> {
         let files = self.process_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
-        let commit = Commit::from_commit_ref_option(self.branch.get_last_commit_ref(), &self.path)?;
+        // Change the get_last_commit_ref name to get_head_tree or something like that
+        let commit = Commit::from_commit_ref_option(self.head.get_tree()?, &self.path)?;
         let mut changed_files: HashMap<RootRelativePath, ChangeType> = HashMap::new();
 
         // Check in the project root directory for changed files

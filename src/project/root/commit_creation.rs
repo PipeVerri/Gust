@@ -57,13 +57,13 @@ impl Root {
     pub fn commit(&mut self, message: String) -> Result<()> {
         let metadata = CommitMetadata::new(message);
         let commit = CommitRef::new(&self, metadata)?;
-        self.branch.insert(commit)?;
+        self.head.insert_commit(commit)?;
         self.staging_area.clear()?;
         Ok(())
     }
 
     pub fn info(&self) -> Result<()> {
-        println!("Commit history:\n{}", self.branch.display());
+        println!("Commit history:\n{}", self.head.display());
         Ok(())
     }
 }
