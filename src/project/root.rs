@@ -1,6 +1,7 @@
 mod commit_creation;
 mod path_processing;
-mod branch_creation;
+mod branching;
+pub mod checkout;
 
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -22,8 +23,8 @@ pub struct Root {
 impl Root {
     pub fn new() -> Result<Root> {
         let path = find_project_root()?;
-        let head = Head::new(path.clone())?;
-        let staging_area = StagingArea::new(path.clone())?;
+        let head = Head::create(path.clone())?;
+        let staging_area = StagingArea::create(path.clone())?;
 
         Ok(Root {
             path,
@@ -38,9 +39,6 @@ impl Root {
         fs::create_dir("./.gust/blobs")?;
         fs::create_dir("./.gust/commits")?;
         fs::create_dir("./.gust/branches")?;
-        fs::File::create("./.gust/branches/main")?;
-        let mut head = fs::File::create("./.gust/HEAD")?;
-        head.write_all(b"main")?;
         Ok(())
     }
 
@@ -48,6 +46,11 @@ impl Root {
     pub(super) fn get_path(&self) -> &RootPath { &self.path }
     pub(super) fn get_last_commit(&self) -> Result<Option<Commit>> {
         Commit::from_commit_ref_option(self.head.get_tree()?, &self.path)
+    }
+
+    pub fn checkout_head(&mut self, new_head: Head) {
+        // TODO: Change working tree and check if there are any changes(cant checkout)
+        self.head = new_head;
     }
 }
 

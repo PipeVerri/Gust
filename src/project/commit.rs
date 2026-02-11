@@ -65,7 +65,7 @@ pub enum FileStatus {
 
 impl Commit {
     pub fn from_commit_ref(reference: &CommitRef, root_path: &RootPath) -> Result<Commit> {
-        Commit::new((root_path.clone(), reference.commit_id.clone()))
+        Commit::create((root_path.clone(), reference.commit_id.clone()))
     }
     pub fn from_commit_ref_option(reference: Option<&CommitRef>, root_path: &RootPath) -> Result<Option<Commit>> {
         if let Some(commit_ref) = reference {

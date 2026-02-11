@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use crate::project::root::Root;
 use crate::project::error::Result;
+use crate::project::root::checkout::CheckoutMode;
 
 #[derive(Parser)]
 #[command(name = "Gust")]
@@ -29,7 +30,12 @@ pub enum Commands {
     Status,
     Info,
     Branch {
-        branch_name: String
+        branch_name: Option<String>
+    },
+    Checkout {
+        name: String,
+        #[arg(long, short, value_enum)]
+        mode: Option<CheckoutMode>,
     }
 }
 
@@ -46,6 +52,7 @@ impl Commands {
                     Commands::Status => project.status(),
                     Commands::Info => project.info(),
                     Commands::Branch { branch_name } => project.branch(branch_name),
+                    Commands::Checkout { mode, name } => project.checkout(mode, name),
                     _ => unreachable!() // Panics if it reaches this
                 }
             }

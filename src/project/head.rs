@@ -3,9 +3,8 @@ use crate::project::branch::Branch;
 use crate::project::root::RootPath;
 use crate::project::error::Result;
 use crate::project::storable::ProjectStorable;
-use std::fs;
 use serde::{Serialize, Deserialize};
-use crate::project::commit::{Commit, CommitRef};
+use crate::project::commit::{CommitRef};
 use crate::project::paths::AbsolutePath;
 
 pub enum Head {
@@ -41,14 +40,14 @@ impl Head {
     pub fn display(&self) -> String {
         match self {
             Self::Attached(branch) => {
-                format!("On branch {}\n", branch.name).to_string() +  branch.display().as_str()
+                format!("Commit history of {} branch:\n", branch.name).to_string() +  branch.display().as_str()
             },
             Self::Detached => "Detached".into()
         }
     }
 
     fn default(root_path: &RootPath) -> Result<Self> {
-        Ok(Self::Attached(Branch::new((root_path.clone(), "main".into()))?))
+        Ok(Self::Attached(Branch::create((root_path.clone(), "main".into()))?))
     }
 }
 
@@ -60,7 +59,7 @@ impl ProjectStorable for Head {
     }
     fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Head> {
         Ok(match stored {
-            StoredHead::Attached(name) => Head::Attached(Branch::new((creation_args, name))?),
+            StoredHead::Attached(name) => Head::Attached(Branch::create((creation_args, name))?),
             StoredHead::Detached => unimplemented!()
         })
     }

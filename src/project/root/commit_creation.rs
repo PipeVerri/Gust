@@ -63,7 +63,7 @@ impl Root {
     }
 
     pub fn info(&self) -> Result<()> {
-        println!("Commit history:\n{}", self.head.display());
+        println!("{}", self.head.display());
         Ok(())
     }
 }
