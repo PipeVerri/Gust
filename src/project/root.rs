@@ -11,7 +11,7 @@ use super::paths::AbsolutePath;
 use super::branch::Branch;
 use super::staging_area::StagingArea;
 use super::error::{Result, GustError};
-use super::storable::{IdStorable, FixedStorable};
+use super::storable::{ProjectStorable, ContainsStorePath};
 
 pub struct Root {
     path: RootPath,
@@ -23,8 +23,8 @@ impl Root {
     pub fn new() -> Result<Root> {
         let path = find_project_root()?;
         let head = parse_head(&path)?;
-        let branch = Branch::new_from_root(&path, &head)?;
-        let staging_area = StagingArea::new_from_root(&path)?;
+        let branch = Branch::new((path.clone(), head))?;
+        let staging_area = StagingArea::new(path.clone())?;
 
         Ok(Root {
             path,
@@ -75,6 +75,7 @@ fn parse_head(root_path: &RootPath) -> Result<String> {
     Ok(fs::read_to_string(head_path.as_path())?.trim().to_string())
 }
 
+#[derive(Clone)]
 pub struct RootPath(PathBuf);
 impl RootPath {
     pub(super) fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }

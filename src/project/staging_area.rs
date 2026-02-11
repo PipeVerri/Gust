@@ -2,7 +2,7 @@ use super::paths::{AbsolutePath, RootRelativePath};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use super::root::RootPath;
-use super::storable::{HasAbsolutePath, ProjectStorable, FixedStorable};
+use super::storable::{ContainsStorePath, ProjectStorable};
 use super::error::{GustError, Result};
 
 #[derive(Debug)]
@@ -46,25 +46,23 @@ impl StagingArea {
     }
 }
 
-impl HasAbsolutePath for StagingArea {
-    fn get_absolute_path(&self) -> &AbsolutePath {
-        &self.store_path
-    }
-}
-
 impl ProjectStorable for StagingArea {
     type Stored = HashMap<RootRelativePath, ChangeType>;
-    fn from_stored(stored: Self::Stored, store_path: AbsolutePath) -> Self {
-        Self { files: stored, store_path }
+    type CreationArgs = RootPath;
+    fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
+        creation_args.join(".gust/staging_area.json")
+    }
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
+        Self { files: stored, store_path: Self::build_absolute_path(&creation_args) }
     }
     fn into_stored(&self) -> &Self::Stored {
         &self.files
     }
 }
 
-impl FixedStorable for StagingArea {
-    fn create_absolute_path(path: &RootPath) -> AbsolutePath {
-        path.join(".gust/staging_area.json")
+impl ContainsStorePath for StagingArea {
+    fn get_absolute_path(&self) -> &AbsolutePath {
+        &self.store_path
     }
 }
 

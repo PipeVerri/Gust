@@ -5,7 +5,7 @@ use super::error::{GustError, Result as GustResult};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct CliPath(PathBuf);
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub(super) struct AbsolutePath(PathBuf);
 #[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq, Clone)]
 pub(super) struct RootRelativePath(PathBuf);

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use crate::project::root::{Root, RootPath};
 use super::paths::{AbsolutePath, RootRelativePath};
-use super::storable::{HasAbsolutePath, IdStorable, ProjectStorable};
+use super::storable::{ContainsStorePath, ProjectStorable};
 use super::tracked_file::{hash_file, Metadata, TrackedFile};
 use super::error::{Result, GustError};
 use super::staging_area::ChangeType;
@@ -29,17 +29,15 @@ pub(super) struct StorableCommit {
     metadata: CommitMetadata
 }
 
-impl HasAbsolutePath for Commit {
-    fn get_absolute_path(&self) -> &AbsolutePath {
-        &self.store_path
-    }
-}
-
 impl ProjectStorable for Commit {
     type Stored = StorableCommit;
-    fn from_stored(stored: Self::Stored, store_path: AbsolutePath) -> Self {
+    type CreationArgs = (RootPath, String);
+    fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
+        creation_args.0.join(&format!(".gust/commits/{}.json", creation_args.1))
+    }
+    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
         Self {
-            store_path,
+            store_path: Self::build_absolute_path(&creation_args),
             data: stored
         }
     }
@@ -52,9 +50,9 @@ impl ProjectStorable for Commit {
     }
 }
 
-impl IdStorable for Commit {
-    fn construct_absolute_path(path: &RootPath, id: &str) -> AbsolutePath {
-        path.join(&format!(".gust/commits/{}.json", id))
+impl ContainsStorePath for Commit {
+    fn get_absolute_path(&self) -> &AbsolutePath {
+        &self.store_path
     }
 }
 
@@ -66,8 +64,7 @@ pub enum FileStatus {
 
 impl Commit {
     pub fn from_commit_ref(reference: &CommitRef, root_path: &RootPath) -> Result<Commit> {
-        let commit_path = Commit::construct_absolute_path(root_path, &reference.commit_id);
-        Commit::new_from_absolute(commit_path)
+        Commit::new((root_path.clone(), reference.commit_id.clone()))
     }
     pub fn from_commit_ref_option(reference: Option<&CommitRef>, root_path: &RootPath) -> Result<Option<Commit>> {
         if let Some(commit_ref) = reference {
@@ -123,7 +120,7 @@ impl CommitRef {
         };
         let id = sha256::digest(serde_json::to_string(&storable)?);
         let commit = Commit {
-            store_path: Commit::construct_absolute_path(root.get_path(), &id.to_string()),
+            store_path: Commit::build_absolute_path(&(root.get_path().clone(), id.to_string())),
             data: storable
         };
         commit.save()?;
