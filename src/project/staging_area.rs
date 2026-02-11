@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use super::paths::{AbsolutePath, RootRelativePath};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
@@ -55,8 +56,8 @@ impl ProjectStorable for StagingArea {
     fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
         Self { files: stored, store_path: Self::build_absolute_path(&creation_args) }
     }
-    fn into_stored(&self) -> &Self::Stored {
-        &self.files
+    fn into_stored(&self) -> Cow<'_, Self::Stored> {
+        Cow::Borrowed(&self.files)
     }
 }
 

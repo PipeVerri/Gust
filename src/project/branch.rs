@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
 use super::commit::CommitRef;
@@ -51,8 +52,8 @@ impl ProjectStorable for Branch {
     fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self {
         Self { commits: stored, store_path: Self::build_absolute_path(&creation_args) }
     }
-    fn into_stored(&self) -> &Self::Stored {
-        &self.commits
+    fn into_stored(&self) -> Cow<'_, Self::Stored> {
+        Cow::Borrowed(&self.commits)
     }
 }
 

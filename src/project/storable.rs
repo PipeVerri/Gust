@@ -1,4 +1,5 @@
 use std::{fs, io};
+use std::borrow::Cow;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use super::error::Result;
@@ -7,11 +8,11 @@ use crate::project::root::RootPath;
 
 // The compiler needs to know Self is sized to know how much space it occupies on the stack
 pub trait ProjectStorable: Sized {
-    type Stored: Serialize + DeserializeOwned + Default; // Default allows the creation of a new empty instance
+    type Stored: Serialize + DeserializeOwned + Default + Clone; // Default allows the creation of a new empty instance, Clone so Cow can take ownership
     type CreationArgs;
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath;
     fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Self;
-    fn into_stored(&self) -> &Self::Stored;
+    fn into_stored(&self) -> Cow<'_, Self::Stored>;
     fn handle_non_existence(_: &AbsolutePath) -> Result<Self::Stored> {
         Ok(Self::Stored::default())
     }

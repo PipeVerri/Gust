@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use crate::project::root::{Root, RootPath};
@@ -23,7 +24,7 @@ pub(super) struct CommitMetadata {
     name: String
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub(super) struct StorableCommit {
     tree: HashMap<RootRelativePath, TrackedFile>,
     metadata: CommitMetadata
@@ -41,8 +42,8 @@ impl ProjectStorable for Commit {
             data: stored
         }
     }
-    fn into_stored(&self) -> &Self::Stored {
-        &self.data
+    fn into_stored(&self) -> Cow<'_, Self::Stored> {
+        Cow::Borrowed(&self.data)
     }
 
     fn handle_non_existence(path: &AbsolutePath) -> Result<Self::Stored> {
