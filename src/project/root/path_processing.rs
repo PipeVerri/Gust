@@ -17,7 +17,7 @@ impl Root {
                 return Err(GustError::User(format!("Path {:?} is not a root path", absolute_path)));
             }
             if absolute_path.is_dir() {
-                for file in self.process_folder(&absolute_path)? {
+                for file in self.scan_folder(&absolute_path)? {
                     apply(self, &file)?;
                 }
             } else {
@@ -28,7 +28,7 @@ impl Root {
     }
 
     pub(super) fn get_changed_files(&self) -> Result<HashMap<RootRelativePath, ChangeType>> {
-        let files = self.process_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
+        let files = self.scan_folder(&AbsolutePath::from_absolute_path(self.path.as_path()))?;
         // Change the get_last_commit_ref name to get_head_tree or something like that
         let commit = Commit::from_commit_ref_option(self.head.get_tree()?, &self.path)?;
         let mut changed_files: HashMap<RootRelativePath, ChangeType> = HashMap::new();
@@ -65,7 +65,7 @@ impl Root {
         Ok(changed_files)
     }
 
-    fn process_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
+    pub fn scan_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
         if path.as_path() == &self.path.as_path().join(".gust") {
             return Ok(Vec::new()); // Dont process the root .gust folder
         }
@@ -76,7 +76,7 @@ impl Root {
         for entry in entries {
             let entry_path = AbsolutePath::from_absolute_path(&entry.unwrap().path());
             if entry_path.is_dir() {
-                let entry_result = self.process_folder(&entry_path)?;
+                let entry_result = self.scan_folder(&entry_path)?;
                 files.extend(entry_result);
             } else {
                 files.push(entry_path);

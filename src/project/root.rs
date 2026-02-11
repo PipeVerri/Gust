@@ -47,11 +47,6 @@ impl Root {
     pub(super) fn get_last_commit(&self) -> Result<Option<Commit>> {
         Commit::from_commit_ref_option(self.head.get_tree()?, &self.path)
     }
-
-    pub fn checkout_head(&mut self, new_head: Head) {
-        // TODO: Change working tree and check if there are any changes(cant checkout)
-        self.head = new_head;
-    }
 }
 
 fn find_project_root() ->  Result<RootPath> { // Size for Path needs to be known at compile time
