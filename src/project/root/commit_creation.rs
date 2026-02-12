@@ -10,7 +10,7 @@ impl Root {
         // TODO: Use a trie for faster addition
         // Checks that the user added the change either by passing the direct file or a parent directory
         for (file, change) in self.get_changed_files()? {
-            let absolute_file = self.path.join_path(file.as_path());
+            let absolute_file = self.path.join(file.as_path());
             for cli_path in paths {
                 let absolute_cli = AbsolutePath::try_from(CliPath::from(cli_path.as_path()))?;
                 if absolute_file == absolute_cli || absolute_file.as_path().starts_with(absolute_cli.as_path()) {

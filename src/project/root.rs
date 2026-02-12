@@ -70,8 +70,9 @@ fn find_project_root() ->  Result<RootPath> { // Size for Path needs to be known
 #[derive(Clone)]
 pub struct RootPath(PathBuf);
 impl RootPath {
-    pub(super) fn join(&self, path: &str) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
-    pub(super) fn join_path(&self, path: &Path) -> AbsolutePath { AbsolutePath::from_absolute_path(&self.0.join(path)) }
+    pub(super) fn join<T: AsRef<Path>>(&self, path: T) -> AbsolutePath {
+        AbsolutePath::from_absolute_path(&self.0.join(path))
+    }
     pub(super) fn as_path(&self) -> &Path { self.0.as_path() }
     pub(super) fn is_inside_root(&self, path: &AbsolutePath) -> bool {
         path.as_path().starts_with(&self.0.as_path())

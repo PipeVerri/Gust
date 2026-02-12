@@ -57,7 +57,7 @@ impl ProjectStorable for StagingArea {
             match change_type { 
                 ChangeType::Removed => true,
                 _ => {
-                    let absolute_path = creation_args.join_path(path.as_path());
+                    let absolute_path = creation_args.join(path.as_path());
                     absolute_path.as_path().exists()
                 }
             }

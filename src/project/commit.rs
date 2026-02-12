@@ -112,7 +112,7 @@ impl CommitRef {
             match change_type {
                 ChangeType::Removed => { tree.remove(&file); },
                 _ => {
-                    let absolute_file_path = root.get_path().join_path(file.as_path());
+                    let absolute_file_path = root.get_path().join(file.as_path());
                     let tracked_file = TrackedFile::new(&absolute_file_path, root.get_path())?;
                     tree.insert(file, tracked_file);
                 }

@@ -56,7 +56,7 @@ impl Root {
 
         if let Some(c) = commit.as_ref() {
             for tracked_file in c.tree_iterator() {
-                let absolute_path = &self.path.join_path(tracked_file.0.as_path());
+                let absolute_path = &self.path.join(tracked_file.0.as_path());
                 if !absolute_path.as_path().exists() {
                     changed_files.insert(tracked_file.0.clone(), ChangeType::Removed);
                 }

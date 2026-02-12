@@ -103,7 +103,7 @@ impl Root {
 
         // Set the files with the tree's version of them
         for (path, content) in target_tree {
-            let destination_path = &self.path.join_path(path.as_path());
+            let destination_path = &self.path.join(path.as_path());
             let blob_path = self.path.join(&format!(".gust/blobs/{}", content.get_blob_id()));
             fs::copy(blob_path.as_path(), destination_path.as_path())?;
         }
