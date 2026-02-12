@@ -31,10 +31,10 @@ impl TrackedFile {
         // Create the blob
         let hash = hash_file(path.as_path())?;
         let blob_path = root_dir.join(&format!(".gust/blobs/{}", hash.to_string()));
-        if blob_path.as_path().exists() {
-            return Err(GustError::ProjectParsing(format!("Blob for {} already exists", path.as_path().display())));
+        // Avoids re-copying the file's contents for duplicate files and doesn't raise an error for duplicate files
+        if !blob_path.as_path().exists() {
+            fs::copy(path.as_path(), blob_path.as_path())?;
         }
-        fs::copy(path.as_path(), blob_path.as_path())?;
 
         // Create metadata
         let metadata = Metadata::new_from_file(path);
