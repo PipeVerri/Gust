@@ -1,9 +1,10 @@
 use std::collections::{HashMap};
+use std::fmt::format;
 use clap::ValueEnum;
 use crate::project::branch::{Branch, BranchTrait, DetachedBranch};
 use crate::project::commit::{Commit, CommitRef};
 use super::Root;
-use crate::project::error::{GustError, Result};
+use crate::project::error::{GustError, Result as GustResult};
 use crate::project::head::Head;
 use crate::project::paths::RootRelativePath;
 use crate::project::storable::{ContainsStorePath, ProjectStorable};
@@ -16,8 +17,29 @@ pub(crate) enum CheckoutMode {
     Commit,
 }
 
+enum CommitCheckoutError {
+    CommitNotFound,
+    MultipleCommitsFound(Vec<String>),
+    NormalError(GustError)
+}
+
+impl From<std::io::Error> for CommitCheckoutError {
+    fn from(value: std::io::Error) -> Self {
+        CommitCheckoutError::NormalError(GustError::Io(value))
+    }
+}
+impl From<CommitCheckoutError> for GustError {
+    fn from(value: CommitCheckoutError) -> Self {
+        match value {
+            CommitCheckoutError::CommitNotFound => GustError::User("Commit not found".into()),
+            CommitCheckoutError::MultipleCommitsFound(commits) => GustError::User(format!("Multiple commits found\n{:?}", commits)),
+            CommitCheckoutError::NormalError(error) => error
+        }
+    }
+}
+
 impl Root {
-    pub fn checkout(&mut self, checkout_mode: &Option<CheckoutMode>, name: &str) -> Result<()> {
+    pub fn checkout(&mut self, checkout_mode: &Option<CheckoutMode>, name: &str) -> GustResult<()> {
         if !self.get_changed_files()?.is_empty() {
             return Err(GustError::User(
                 "There are uncommitted changes in the project. Commit or stash them before checking out a branch".into()
@@ -31,14 +53,31 @@ impl Root {
                 CheckoutMode::Commit => self.checkout_commit(name)?,
             };
         } else {
-            // Automatically check the kind of checkout asked for
-            unimplemented!("Auto checkout mode detector not implemented yet");
+            let branch_path = Branch::build_absolute_path(&(self.path.clone(), name.to_string()));
+            let commit_hash = self.get_full_commit_hash(name);
+            
+            return if branch_path.as_path().exists() {
+                match commit_hash {
+                    Ok(hash) => Err(GustError::User("Branch has the same name as commit. Specify if you want to checkout a branch or a commit using --mode".into())),
+                    Err(e) => match e {
+                        CommitCheckoutError::CommitNotFound => self.checkout_branch(name),
+                        CommitCheckoutError::MultipleCommitsFound(found) => Err(GustError::User(format!("Branch name matches with multiple commits:\n{:?}\nSpecify if you want to checkout a branch or a commit using --mode", found))),
+                        CommitCheckoutError::NormalError(error) => Err(error)
+                    }
+                }
+            } else {
+                match commit_hash {
+                    Ok(hash) => self.checkout_commit(name),
+                    Err(e) => Err(e.into())
+                }
+            }
         }
         Ok(())
     }
 
-    fn checkout_commit(&mut self, partial_hash: &str) -> Result<()> {
+    fn checkout_commit(&mut self, partial_hash: &str) -> GustResult<()> {
         let full_hash = self.get_full_commit_hash(partial_hash)?;
+
         let commit = Commit::load((self.path.clone(), full_hash.clone()))?;
         let commit_ref = CommitRef::new_from_existing(&commit, full_hash);
 
@@ -54,7 +93,7 @@ impl Root {
         Ok(())
     }
 
-    fn get_full_commit_hash(&self, partial_hash: &str) -> Result<String> {
+    fn get_full_commit_hash(&self, partial_hash: &str) -> Result<String, CommitCheckoutError> {
         let commits = fs::read_dir(&self.path.join(".gust/commits/").as_path())?;
         let mut found_commit_hashes= Vec::new();
 
@@ -66,15 +105,15 @@ impl Root {
         }
 
         if found_commit_hashes.len() == 0 {
-            Err(GustError::User("Commit not found".into()))
+            Err(CommitCheckoutError::CommitNotFound)
         } else if found_commit_hashes.len() == 1 {
             Ok(found_commit_hashes[0].clone())
         } else {
-            Err(GustError::User(format!("Multiple commits found:\n{:?}", found_commit_hashes).into()))
+            Err(CommitCheckoutError::MultipleCommitsFound(found_commit_hashes))
         }
     }
 
-    fn checkout_branch(&mut self, name: &str) -> Result<()> {
+    fn checkout_branch(&mut self, name: &str) -> GustResult<()> {
         let dest_branch = Branch::load((self.path.clone(), name.into()))?;
         let dest_branch_latest = Commit::from_commit_ref_option(dest_branch.get_last_commit_ref(), &self.path)?;
         let tree = if let Some(commit) = dest_branch_latest {
@@ -92,7 +131,7 @@ impl Root {
         Ok(())
     }
 
-    fn apply_changes_to_working_tree(&self, target_tree: HashMap<RootRelativePath, TrackedFile>) -> Result<()> {
+    fn apply_changes_to_working_tree(&self, target_tree: HashMap<RootRelativePath, TrackedFile>) -> GustResult<()> {
         // Delete files not present in the tree
         for absolute_path in self.scan_folder(&self.path.join("."))? {
             let relative_path = RootRelativePath::new(&absolute_path, &self.path)?;
