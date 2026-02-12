@@ -50,7 +50,18 @@ impl ProjectStorable for StagingArea {
     fn build_absolute_path(creation_args: &Self::CreationArgs) -> AbsolutePath {
         creation_args.join(".gust/staging_area.json")
     }
-    fn from_stored(stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self> {
+    fn from_stored(mut stored: Self::Stored, creation_args: Self::CreationArgs) -> Result<Self> {
+        // If a file was modified or added, and now it doesn't exist anymore, remove it from the staging area
+        stored.retain(|path, change_type| {
+            // If I'm staging a removal, then the file won't exist, but I still want the change in the staging area
+            match change_type { 
+                ChangeType::Removed => true,
+                _ => {
+                    let absolute_path = creation_args.join_path(path.as_path());
+                    absolute_path.as_path().exists()
+                }
+            }
+        });
         Ok(Self { files: stored, store_path: Self::build_absolute_path(&creation_args) })
     }
     fn into_stored(&self) -> Cow<'_, Self::Stored> {
