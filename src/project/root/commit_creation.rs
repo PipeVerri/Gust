@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use crate::project::commit::{CommitMetadata, CommitRef};
+use crate::project::error::GustError;
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
 use super::{Root, Result};
 
@@ -55,8 +56,13 @@ impl Root {
     }
 
     pub fn commit(&mut self, message: String) -> Result<()> {
+        // Check that there are changes staged for commit
+        if self.staging_area.is_empty() {
+            return Err(GustError::User("Staged changes not found. Use 'gust add' to stage changes before committing".into()));
+        }
+
         let metadata = CommitMetadata::new(message);
-        let commit = CommitRef::new(&self, metadata)?;
+        let commit = CommitRef::new_commit(&self, metadata)?;
         self.head.insert_commit(commit)?;
         self.staging_area.clear()?;
         Ok(())

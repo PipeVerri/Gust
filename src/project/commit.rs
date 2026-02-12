@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use clap::builder::Str;
 use serde::{Serialize, Deserialize};
 use crate::project::root::{Root, RootPath};
 use super::paths::{AbsolutePath, RootRelativePath};
@@ -96,10 +97,12 @@ impl Commit {
     pub fn copy_tree(&self) -> HashMap<RootRelativePath, TrackedFile> {
         self.data.tree.clone()
     }
+    
+    pub fn metadata(&self) -> &CommitMetadata { &self.data.metadata }
 }
 
 impl CommitRef {
-    pub fn new(root: &Root, metadata: CommitMetadata) -> Result<CommitRef> {
+    pub fn new_commit(root: &Root, metadata: CommitMetadata) -> Result<CommitRef> {
         let mut tree = if let Some(c) = root.get_last_commit()? {
             c.copy_tree()
         } else {
@@ -127,6 +130,14 @@ impl CommitRef {
         commit.save()?;
         Ok(CommitRef{ commit_id: id.to_string(), metadata })
     }
+    
+    pub fn new_from_existing(commit: &Commit, hash: String) -> Self {
+        Self {
+            commit_id: hash,
+            metadata: commit.data.metadata.clone()
+        }
+    }
+    
     pub fn display(&self) -> String { format!("{}: {}", self.metadata.name, self.commit_id) }
 }
 

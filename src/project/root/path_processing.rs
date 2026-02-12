@@ -8,6 +8,7 @@ use crate::project::staging_area::ChangeType;
 use super::Root;
 
 impl Root {
+    // Converts PathBuf to RootRelativePath and checks if the path exists and is inside the project
     pub(super) fn process_path_list<F>(&mut self, paths: &Vec<PathBuf>, mut apply: F) -> Result<()>
     where F: FnMut(&mut Self, &AbsolutePath) -> Result<()>
     {

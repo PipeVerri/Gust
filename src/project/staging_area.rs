@@ -25,13 +25,10 @@ impl StagingArea {
         self.save()
     }
     pub fn remove(&mut self, path: RootRelativePath) -> Result<()> {
-        if self.files.contains_key(&path) {
-            self.files.remove(&path);
-            self.save()?;
-            Ok(())
-        } else {
-            Err(GustError::User(format!("{} isn't in the staging area", path.display())))
-        }
+        // I don't care if the user is trying to remove a file that isn't added to the staging area
+        self.files.remove(&path);
+        self.save()?;
+        Ok(())
     }
     pub fn is_empty(&self) -> bool { self.files.is_empty() }
     pub fn contains(&self, path: &RootRelativePath) -> bool {
