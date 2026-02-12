@@ -24,13 +24,14 @@ impl Root {
             }
         };
 
-        // TODO: Hacer un AsRef asi no tengo que poner .as_path todo el tiempo
         for branch_file in fs::read_dir(branches_path.as_path())? {
             let branch_name = branch_file?.path().file_stem().unwrap().to_str().unwrap().to_string();
-            if branch_name != current_branch_name {
-                println!("{}", branch_name);
-            } else {
-                println!("* {}", branch_name);
+            if branch_name != "DETACHED_HEAD" {
+                if branch_name != current_branch_name {
+                    println!("{}", branch_name);
+                } else {
+                    println!("* {}", branch_name);
+                }
             }
         }
         Ok(())
