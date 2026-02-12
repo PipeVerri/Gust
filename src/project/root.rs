@@ -2,12 +2,13 @@ mod commit_creation;
 mod path_processing;
 mod branching;
 pub mod checkout;
+mod ignored_files;
 
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
-use std::io::Write;
 use crate::project::head::Head;
+use ignored_files::IgnoredFile;
 use super::commit::Commit;
 use super::paths::AbsolutePath;
 use super::staging_area::StagingArea;
@@ -18,6 +19,7 @@ pub struct Root {
     path: RootPath,
     head: Head,
     staging_area: StagingArea,
+    ignored_files: Vec<IgnoredFile>
 }
 
 impl Root {
@@ -25,11 +27,13 @@ impl Root {
         let path = find_project_root()?;
         let head = Head::create(path.clone())?;
         let staging_area = StagingArea::create(path.clone())?;
+        let ignored_files = Self::read_ignored(&path)?;
 
         Ok(Root {
             path,
             head,
-            staging_area
+            staging_area,
+            ignored_files
         })
     }
 
@@ -72,6 +76,14 @@ pub struct RootPath(PathBuf);
 impl RootPath {
     pub(super) fn join<T: AsRef<Path>>(&self, path: T) -> AbsolutePath {
         AbsolutePath::from_absolute_path(&self.0.join(path))
+    }
+    pub(super) fn unsafe_join<T: AsRef<Path>>(&self, path: T) -> Result<AbsolutePath> {
+        let result = AbsolutePath::from_absolute_path(&self.0.join(path));
+        if !result.as_path().exists() {
+            Err(GustError::User(format!("Path {} does not exist", result.as_path().display())))
+        } else {
+            Ok(result)
+        }
     }
     pub(super) fn as_path(&self) -> &Path { self.0.as_path() }
     pub(super) fn is_inside_root(&self, path: &AbsolutePath) -> bool {

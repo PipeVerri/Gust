@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use clap::builder::Str;
 use serde::{Serialize, Deserialize};
 use crate::project::root::{Root, RootPath};
 use super::paths::{AbsolutePath, RootRelativePath};

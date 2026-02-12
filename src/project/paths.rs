@@ -51,10 +51,6 @@ impl RootRelativePath {
             Ok(Self(path.strip_prefix(root_path.as_path()).into()))
         }
     }
-    /*pub fn new_from_cli(path: CliPath, root_path: &RootPath) -> GustResult<Self> {
-        let absolute_path = AbsolutePath::try_from(path.clone())?;
-        Ok(Self::new(&absolute_path, root_path)?)
-    }*/
     pub fn display(&self) -> String { self.0.display().to_string() }
     pub fn as_path(&self) -> &Path { self.0.as_path() }
 }

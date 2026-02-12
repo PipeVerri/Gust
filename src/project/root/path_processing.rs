@@ -5,7 +5,7 @@ use crate::project::commit::{Commit, FileStatus};
 use crate::project::error::{GustError, Result};
 use crate::project::paths::{AbsolutePath, CliPath, RootRelativePath};
 use crate::project::staging_area::ChangeType;
-use super::Root;
+use super::{Root};
 
 impl Root {
     // Converts PathBuf to RootRelativePath and checks if the path exists and is inside the project
@@ -69,6 +69,10 @@ impl Root {
     pub fn scan_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
         if path.as_path() == &self.path.as_path().join(".gust") {
             return Ok(Vec::new()); // Dont process the root .gust folder
+        } else if path.as_path().starts_with(&self.path.as_path().join(".gust/")) {
+            return Err(GustError::User(format!("Path {} is inside .gust", path.as_path().display())));
+        } else if self.is_path_ignored(path)? {
+            return Ok(Vec::new());
         }
 
         let entries = fs::read_dir(path.as_path()).unwrap(); // I know the path exists and is a dir
@@ -80,7 +84,9 @@ impl Root {
                 let entry_result = self.scan_folder(&entry_path)?;
                 files.extend(entry_result);
             } else {
-                files.push(entry_path);
+                if !self.is_path_ignored(&entry_path)? {
+                    files.push(entry_path);
+                }
             }
         }
         Ok(files)

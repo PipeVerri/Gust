@@ -13,7 +13,7 @@ impl Root {
             let absolute_file = self.path.join(file.as_path());
             for cli_path in paths {
                 let absolute_cli = AbsolutePath::try_from(CliPath::from(cli_path.as_path()))?;
-                if absolute_file == absolute_cli || absolute_file.as_path().starts_with(absolute_cli.as_path()) {
+                if !self.is_path_ignored(&absolute_cli)? && (absolute_file == absolute_cli || absolute_file.as_path().starts_with(absolute_cli.as_path())) {
                     self.staging_area.insert(file.clone(), change.clone())?;
                 }
             }
