@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 use std::fs;
-use clap::builder::Str;
 use serde::{Serialize, Deserialize};
 use crate::project::root::RootPath;
-use super::commit::{Commit, CommitRef};
+use super::commit::CommitRef;
 use super::paths::AbsolutePath;
 use super::storable::{ContainsStorePath, ProjectStorable};
 use super::error::Result;

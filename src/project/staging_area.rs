@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use super::root::RootPath;
 use super::storable::{ContainsStorePath, ProjectStorable};
-use super::error::{GustError, Result};
+use super::error::Result;
 
 #[derive(Debug)]
 pub(super) struct StagingArea {
@@ -54,7 +54,7 @@ impl ProjectStorable for StagingArea {
         // If a file was modified or added, and now it doesn't exist anymore, remove it from the staging area
         stored.retain(|path, change_type| {
             // If I'm staging a removal, then the file won't exist, but I still want the change in the staging area
-            match change_type { 
+            match change_type {
                 ChangeType::Removed => true,
                 _ => {
                     let absolute_path = creation_args.join(path.as_path());

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use crate::project::branch::{Branch, BranchTrait, DetachedBranch};
 use crate::project::root::RootPath;
 use crate::project::error::Result;
-use crate::project::storable::{ContainsStorePath, ProjectStorable};
+use crate::project::storable::ProjectStorable;
 use serde::{Serialize, Deserialize};
 use crate::project::commit::{CommitRef};
 use crate::project::paths::AbsolutePath;

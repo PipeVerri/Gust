@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use serde::{Serialize, Deserialize};
 use super::paths::AbsolutePath;
-use super::error::{GustError, Result};
+use super::error::{Result};
 use std::fs;
 use std::path::Path;
 use crate::project::root::RootPath;
