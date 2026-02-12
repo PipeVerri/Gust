@@ -28,7 +28,7 @@ pub enum Commands {
         message: String
     },
     Status,
-    Info,
+    Log,
     Branch {
         branch_name: Option<String>
     },
@@ -50,7 +50,7 @@ impl Commands {
                     Commands::Rm { paths } => project.remove(paths),
                     Commands::Commit { message } => project.commit(message.clone()),
                     Commands::Status => project.status(),
-                    Commands::Info => project.info(),
+                    Commands::Log => project.log(),
                     Commands::Branch { branch_name } => project.branch(branch_name),
                     Commands::Checkout { mode, name } => project.checkout(mode, name),
                     _ => unreachable!() // Panics if it reaches this

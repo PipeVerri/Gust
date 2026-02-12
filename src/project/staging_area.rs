@@ -85,7 +85,7 @@ impl ChangeType {
     pub fn display(&self) -> &'static str {
         match self {
             ChangeType::Added => "+",
-            ChangeType::Modified => "~",
+            ChangeType::Modified => "M",
             ChangeType::Removed => "-"
         }
     }

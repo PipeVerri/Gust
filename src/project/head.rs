@@ -33,7 +33,10 @@ impl Head {
     pub fn insert_commit(&mut self, commit_ref: CommitRef) -> Result<()> {
         match self {
             Self::Attached(branch) => branch.insert(commit_ref),
-            Self::Detached(branch) => branch.insert(commit_ref),
+            Self::Detached(branch) => {
+                println!("Warning, you're in detached HEAD mode. Changes will not be tracked. Use 'gust checkout <branch>' to switch to a branch and track changes, or create a new branch with 'gust branch <branch>' to track the changes you've already made");
+                branch.insert(commit_ref)
+            },
         }
     }
 

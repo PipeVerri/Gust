@@ -68,7 +68,7 @@ impl Root {
         Ok(())
     }
 
-    pub fn info(&self) -> Result<()> {
+    pub fn log(&self) -> Result<()> {
         println!("{}", self.head.display());
         Ok(())
     }
