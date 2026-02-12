@@ -83,6 +83,16 @@ impl ProjectStorable for Branch {
     }
 }
 
+impl Branch {
+    pub fn new_from_tree(tree: Vec<CommitRef>, root_path: &RootPath, id: &str) -> Self {
+        Self {
+            commits: tree,
+            store_path: Self::build_absolute_path(&(root_path.clone(), id.to_string())),
+            name: id.to_string()
+        }
+    }
+}
+
 // DetachedBranch implementation
 
 impl BranchTrait for DetachedBranch {
