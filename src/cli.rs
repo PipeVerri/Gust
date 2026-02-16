@@ -10,7 +10,7 @@ use crate::project::root::checkout::CheckoutMode;
 pub struct Cli {
     // Tell clap that this is a subcommand, don't try to parse the text into this enum-type
     #[clap(subcommand)]
-    pub command: Commands,
+    pub(crate) command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -36,6 +36,27 @@ pub enum Commands {
         name: String,
         #[arg(long, short, value_enum)]
         mode: Option<CheckoutMode>,
+    },
+    Stash {
+        #[clap(subcommand)]
+        command: Option<StashCommand>
+    }
+}
+
+#[derive(Subcommand)]
+enum StashCommand {
+    Save {
+        #[arg(short, long)]
+        message: Option<String>
+    },
+    Apply {
+        stash_id: u32
+    },
+    Drop {
+        stash_id: u32
+    },
+    Pop {
+        stash_id: u32
     }
 }
 
@@ -53,7 +74,16 @@ impl Commands {
                     Commands::Log => project.log(),
                     Commands::Branch { branch_name } => project.branch(branch_name),
                     Commands::Checkout { mode, name } => project.checkout(mode, name),
-                    _ => unreachable!() // Panics if it reaches this
+                    Commands::Stash { command } => match command {
+                        None => project.save_stash(None),
+                        Some(stash_command) => match stash_command {
+                            StashCommand::Save { message } => project.save_stash(message.clone()),
+                            StashCommand::Apply { stash_id } => project.apply_stash(stash_id.clone()),
+                            StashCommand::Drop { stash_id } => project.drop_stash(stash_id.clone()),
+                            StashCommand::Pop { stash_id } => project.pop_stash(stash_id.clone()),
+                        }
+                    },
+                    _ => unreachable!(), // Panics if it reaches this
                 }
             }
         }

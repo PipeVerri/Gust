@@ -3,12 +3,14 @@ mod path_processing;
 mod branching;
 pub mod checkout;
 mod ignored_files;
+mod stash;
 
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::env;
 use crate::project::head::Head;
 use ignored_files::IgnoredFile;
+use crate::project::root::stash::Stashes;
 use super::commit::Commit;
 use super::paths::AbsolutePath;
 use super::staging_area::StagingArea;
@@ -19,7 +21,8 @@ pub struct Root {
     path: RootPath,
     head: Head,
     staging_area: StagingArea,
-    ignored_files: Vec<IgnoredFile>
+    ignored_files: Vec<IgnoredFile>,
+    stashes: Stashes
 }
 
 impl Root {
@@ -28,12 +31,14 @@ impl Root {
         let head = Head::create(path.clone())?;
         let staging_area = StagingArea::create(path.clone())?;
         let ignored_files = Self::read_ignored(&path)?;
+        let stashes = Stashes::create(path.clone())?;
 
         Ok(Root {
             path,
             head,
             staging_area,
-            ignored_files
+            ignored_files,
+            stashes
         })
     }
 
