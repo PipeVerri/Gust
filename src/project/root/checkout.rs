@@ -1,5 +1,4 @@
 use std::collections::{HashMap};
-use std::fmt::format;
 use clap::ValueEnum;
 use crate::project::branch::{Branch, BranchTrait, DetachedBranch};
 use crate::project::commit::{Commit, CommitRef};
@@ -58,7 +57,7 @@ impl Root {
             
             return if branch_path.as_path().exists() {
                 match commit_hash {
-                    Ok(hash) => Err(GustError::User("Branch has the same name as commit. Specify if you want to checkout a branch or a commit using --mode".into())),
+                    Ok(_) => Err(GustError::User("Branch has the same name as commit. Specify if you want to checkout a branch or a commit using --mode".into())),
                     Err(e) => match e {
                         CommitCheckoutError::CommitNotFound => self.checkout_branch(name),
                         CommitCheckoutError::MultipleCommitsFound(found) => Err(GustError::User(format!("Branch name matches with multiple commits:\n{:?}\nSpecify if you want to checkout a branch or a commit using --mode", found))),
@@ -67,7 +66,7 @@ impl Root {
                 }
             } else {
                 match commit_hash {
-                    Ok(hash) => self.checkout_commit(name),
+                    Ok(_) => self.checkout_commit(name),
                     Err(e) => Err(e.into())
                 }
             }

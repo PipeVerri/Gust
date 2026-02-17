@@ -1,7 +1,6 @@
 use std::fs;
-use std::fs::read_to_string;
 use std::path::PathBuf;
-use crate::project::paths::{AbsolutePath, RootRelativePath};
+use crate::project::paths::AbsolutePath;
 use super::{Root, RootPath};
 use crate::project::error::{GustError, Result};
 
@@ -30,7 +29,7 @@ impl Root {
         Ok(parsed)
     }
 
-    pub fn is_path_ignored(&self, path: &AbsolutePath) -> Result<bool> {
+    pub(super) fn is_path_ignored(&self, path: &AbsolutePath) -> Result<bool> {
         for ignored in &self.ignored_files {
             let check = match ignored {
                 IgnoredFile::Fixed(relative_path) => {

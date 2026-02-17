@@ -66,7 +66,7 @@ impl Root {
         Ok(changed_files)
     }
 
-    pub fn scan_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
+    pub(super) fn scan_folder(&self, path: &AbsolutePath) -> Result<Vec<AbsolutePath>> {
         if path.as_path() == &self.path.as_path().join(".gust") {
             return Ok(Vec::new()); // Dont process the root .gust folder
         } else if path.as_path().starts_with(&self.path.as_path().join(".gust/")) {
