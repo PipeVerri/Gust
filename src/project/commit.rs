@@ -96,8 +96,6 @@ impl Commit {
     pub fn copy_tree(&self) -> HashMap<RootRelativePath, TrackedFile> {
         self.data.tree.clone()
     }
-    
-    pub fn metadata(&self) -> &CommitMetadata { &self.data.metadata }
 }
 
 impl CommitRef {
